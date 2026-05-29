@@ -22,7 +22,7 @@ function CodeBlock({ language, code }: CodeBlockProps) {
   }
 
   return (
-    <div className="my-4 rounded-xl overflow-hidden border border-border text-sm shadow-sm">
+    <div className="my-4 overflow-hidden rounded-lg border border-border text-sm shadow-sm">
       <div className="flex items-center justify-between px-4 py-2 bg-muted/60 border-b border-border">
         <span className="text-xs font-mono font-medium text-primary tracking-wide">
           {language || 'text'}

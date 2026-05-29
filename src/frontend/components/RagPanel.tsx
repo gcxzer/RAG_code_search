@@ -13,13 +13,13 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
   const hasData = retrieval.length > 0 || prompt !== null
 
   return (
-    <aside className="w-[340px] shrink-0 hidden lg:flex flex-col border-l border-border bg-[hsl(var(--sidebar-bg))] overflow-hidden">
+    <aside className="panel hidden w-[360px] shrink-0 flex-col overflow-hidden lg:flex">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-[hsl(var(--background))]">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Cpu size={13} className="text-primary" />
-          <span className="text-sm font-semibold tracking-tight">RAG Trace</span>
+          <span className="text-sm font-semibold tracking-tight">References</span>
         </div>
         {streaming && (
           <div className="flex items-center gap-1.5">
@@ -35,15 +35,13 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
       {/* Empty state */}
       {!hasData ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5
-                          flex items-center justify-center
-                          shadow-[0_4px_16px_rgba(107,92,231,0.1)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-[hsl(var(--elevated))]">
             <Search size={20} className="text-primary/50" strokeWidth={1.5} />
           </div>
           <div className="text-center">
-            <p className="text-xs font-medium text-foreground/50">Waiting for retrieval</p>
+            <p className="text-xs font-medium text-foreground/50">No references yet</p>
             <p className="text-[11px] text-muted-foreground/40 mt-0.5 leading-relaxed">
-              Send a message<br />to inspect retrieval
+              Send a message<br />to inspect references
             </p>
           </div>
           {/* Decorative skeleton lines */}
@@ -63,7 +61,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
                 data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
             >
               <FileCode size={11} />
-              Results {retrieval.length > 0 && <span className="ml-0.5 text-primary">·{retrieval.length}</span>}
+              References {retrieval.length > 0 && <span className="ml-0.5 text-primary">·{retrieval.length}</span>}
             </Tabs.Trigger>
             <Tabs.Trigger
               value="prompt"
@@ -79,12 +77,12 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
           {/* Retrieval results */}
           <Tabs.Content value="retrieval" className="flex-1 overflow-y-auto p-3 space-y-2">
             {retrieval.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center mt-8">No retrieval results</p>
+              <p className="text-xs text-muted-foreground text-center mt-8">No references</p>
             ) : (
               retrieval.map((r, i) => (
                 <div
                   key={r.chunk_id}
-                  className="card-in rounded-lg border border-border bg-[hsl(var(--elevated))] overflow-hidden"
+                  className="card-in overflow-hidden rounded-lg border border-border bg-card"
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
                   {/* Card header */}
@@ -107,7 +105,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
                         />
                       </div>
                     </div>
-                    <pre className="px-3 py-2.5 font-mono text-xs overflow-x-auto bg-[hsl(var(--sidebar-bg))] border-t border-border whitespace-pre-wrap text-foreground/75 leading-relaxed">
+                    <pre className="border-t border-border bg-[hsl(var(--elevated))] px-3 py-2.5 font-mono text-xs leading-relaxed text-foreground/75 overflow-x-auto whitespace-pre-wrap">
                       {r.content}
                     </pre>
                   </details>

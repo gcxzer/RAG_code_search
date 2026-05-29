@@ -23,7 +23,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="RAG Trace"
+        aria-label="References"
         className={`fixed top-0 right-0 h-full w-[340px] z-50 flex flex-col
           bg-[hsl(var(--sidebar-bg))] border-l border-border shadow-2xl
           transition-transform duration-300 ease-in-out
@@ -33,7 +33,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <Cpu size={14} className="text-primary" />
-            <span className="font-semibold text-sm tracking-tight">RAG Trace</span>
+            <span className="font-semibold text-sm tracking-tight">References</span>
           </div>
           <button
             onClick={onClose}
@@ -49,7 +49,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
           {retrieval.length === 0 && !prompt ? (
             <div className="flex flex-col items-center justify-center mt-16 gap-3 text-muted-foreground">
               <Search size={28} strokeWidth={1.5} />
-              <p className="text-xs text-center">Send a message<br />to inspect retrieval</p>
+              <p className="text-xs text-center">Send a message<br />to inspect references</p>
             </div>
           ) : (
             <>
@@ -58,7 +58,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
                   <div className="flex items-center gap-1.5 px-1 mb-2">
                     <FileCode size={12} className="text-primary" />
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                      Retrieval Results · {retrieval.length}
+                        References · {retrieval.length}
                     </span>
                   </div>
                   {retrieval.map((r, i) => (

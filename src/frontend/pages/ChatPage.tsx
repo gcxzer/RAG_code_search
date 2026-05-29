@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Cpu, Bot, Braces } from 'lucide-react'
+import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Bot, Braces } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { listRepos, listSessions, createSession, deleteSession, chatStream } from '@/services/api'
@@ -182,23 +182,28 @@ export default function ChatPage() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
+  const selectedRepo = repos.find(r => r.repo_id === repoId)
+  const activeReferenceCount = activeRagIndex !== null
+    ? (messages[activeRagIndex]?.ragData?.retrieval.length ?? 0)
+    : 0
+
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full gap-5 overflow-hidden bg-background p-5">
+      <aside className="panel hidden w-[300px] shrink-0 flex-col overflow-hidden md:flex">
+        <div className="border-b border-border p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Conversations</p>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight">Chat</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">Ask questions about one indexed repository.</p>
+        </div>
 
-      {/* Left Panel: 280px */}
-      <aside className="w-[280px] shrink-0 hidden md:flex flex-col border-r border-border bg-[hsl(var(--sidebar-bg))] overflow-hidden">
-
-        {/* Repo selector */}
-        <div className="px-4 pt-4 pb-2 shrink-0">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">
+        <div className="space-y-3 border-b border-border p-4">
+          <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Repository
           </label>
           {repos.length === 0 ? (
             <button
               onClick={() => navigate('/repos')}
-              className="cursor-pointer flex items-center gap-2 text-xs text-[#7c6af7] font-medium
-                         py-2 px-3 rounded-xl bg-[#7c6af7]/10 border border-[#7c6af7]/20
-                         hover:bg-[#7c6af7]/15 hover:border-[#7c6af7]/35 transition-all w-full justify-center"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition-all hover:border-primary/40 hover:bg-primary/15"
             >
               <FolderOpen size={13} />
               Add repository
@@ -208,9 +213,9 @@ export default function ChatPage() {
               <select
                 value={repoId}
                 onChange={e => setRepoId(e.target.value)}
-                className="cursor-pointer w-full appearance-none border border-border rounded-xl
+                className="cursor-pointer w-full appearance-none border border-border rounded-lg
                            px-3 py-2 pr-8 text-xs bg-[hsl(var(--elevated))] text-foreground
-                           focus:outline-none focus:ring-2 focus:ring-[#7c6af7]/20 focus:border-[#7c6af7]/40
+                           focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary
                            transition-all font-medium"
               >
                 {repos.map(r => <option key={r.repo_id} value={r.repo_id}>{r.name}</option>)}
@@ -218,32 +223,21 @@ export default function ChatPage() {
               <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
           )}
-        </div>
-
-        {/* New session button */}
-        <div className="px-4 pb-3 shrink-0">
           <button
             type="button"
             onClick={handleNewSession}
-            className="cursor-pointer w-full flex items-center justify-center gap-1.5
-                       text-xs px-3 py-2 rounded-xl font-medium transition-all
-                       bg-[#7c6af7]/10 text-[#7c6af7] border border-[#7c6af7]/20
-                       hover:bg-[#7c6af7]/15 hover:border-[#7c6af7]/35
-                       active:scale-[0.98]"
+            className="btn-primary h-9 w-full text-xs"
           >
             <Plus size={12} strokeWidth={2.5} />
             New chat
           </button>
         </div>
 
-        <div className="h-px bg-border shrink-0" />
-
-        {/* Session list */}
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto p-2">
           {sessions.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 mt-10 text-muted-foreground px-4">
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-muted-foreground">
               <MessageSquare size={18} strokeWidth={1.5} />
-              <p className="text-xs text-center">No chats yet. Start a new one.</p>
+              <p className="text-center text-xs">No conversations yet.</p>
             </div>
           ) : (
             sessions.map((s, i) => (
@@ -251,10 +245,10 @@ export default function ChatPage() {
                 key={s.session_id}
                 onClick={() => handleSelectSession(s)}
                 className={cn(
-                  'session-in cursor-pointer px-3 py-2.5 flex items-start justify-between group transition-all border-l-2',
+                  'session-in group flex cursor-pointer items-start justify-between rounded-lg border px-3 py-2.5 transition-all',
                   activeSession?.session_id === s.session_id
-                    ? 'bg-[#7c6af7]/10 border-l-[#7c6af7]'
-                    : 'border-l-transparent hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'
+                    ? 'border-primary/25 bg-primary/10'
+                    : 'border-transparent hover:border-border hover:bg-[hsl(var(--hover))]'
                 )}
                 style={{ animationDelay: `${i * 50}ms` }}
               >
@@ -262,7 +256,7 @@ export default function ChatPage() {
                   <div className={cn(
                     'shrink-0 mt-0.5 w-6 h-6 rounded-md flex items-center justify-center transition-colors',
                     activeSession?.session_id === s.session_id
-                      ? 'bg-[#7c6af7]/15 text-[#7c6af7]'
+                      ? 'bg-primary/15 text-primary'
                       : 'bg-[hsl(var(--elevated))] text-muted-foreground'
                   )}>
                     <MessageSquare size={11} />
@@ -270,9 +264,9 @@ export default function ChatPage() {
                   <div className="min-w-0 flex-1">
                     <p className={cn(
                       'text-sm truncate font-medium leading-5 transition-colors',
-                      activeSession?.session_id === s.session_id ? 'text-[#7c6af7]' : 'text-foreground'
+                      activeSession?.session_id === s.session_id ? 'text-primary' : 'text-foreground'
                     )}>
-                      {s.messages.length > 0 ? s.messages[0].content.slice(0, 28) + '...' : 'New chat'}
+                      {s.messages.length > 0 ? s.messages[0].content.slice(0, 34) + '...' : 'New chat'}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {s.messages.length > 0 && (
@@ -285,7 +279,7 @@ export default function ChatPage() {
                 </div>
                 <button
                   onClick={e => handleDeleteSession(s.session_id, e)}
-                  aria-label="Delete chat"
+                  aria-label="Delete thread"
                   className="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded
                              text-muted-foreground hover:text-destructive hover:bg-destructive/10
                              ml-1 mt-0.5 shrink-0 transition-all"
@@ -298,52 +292,54 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      {/* Chat Center: flex-1 */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[hsl(var(--chat-bg))] relative">
-
-        {/* Glass header with repo scope pill */}
-        <div className="glass-panel flex items-center justify-center px-5 py-3 border-b border-border shrink-0 absolute top-0 w-full z-10">
-          {repoId && repos.find(r => r.repo_id === repoId) && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(var(--elevated))] border border-border text-xs text-muted-foreground">
-              <Database size={11} className="text-[#7c6af7]" />
-              <span>Scope:</span>
-              <span className="text-foreground font-medium">{repos.find(r => r.repo_id === repoId)?.name}</span>
+      <main className="panel flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex shrink-0 flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Chat</p>
+            <h1 className="mt-1 truncate text-lg font-semibold tracking-tight">
+              {activeSession ? 'Active conversation' : 'No conversation selected'}
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5">
+              <Database size={12} className="text-primary" />
+              <span className="truncate font-medium text-foreground">{selectedRepo?.name ?? 'No repository'}</span>
             </div>
-          )}
-        </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5">
+              <Search size={12} className="text-primary" />
+              <span className="font-mono">{activeReferenceCount} references</span>
+            </div>
+          </div>
+        </header>
 
-        {/* Empty state */}
         {!activeSession ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5
-                            flex items-center justify-center
-                            shadow-[0_8px_24px_rgba(107,92,231,0.15)]">
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 px-8">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
               <Braces size={30} className="text-primary" />
             </div>
             <div className="text-center space-y-2">
-              <h2 className="text-xl font-semibold text-foreground tracking-tight">Code Assistant</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-[220px]">
-                Select a repository and start a chat<br />Ask questions about code and get precise answers
+              <h2 className="text-xl font-semibold text-foreground tracking-tight">Start a chat</h2>
+              <p className="max-w-[280px] text-sm leading-relaxed text-muted-foreground">
+                Ask questions about indexed code and review the referenced files.
               </p>
             </div>
             <button
               onClick={handleNewSession}
-              className="cursor-pointer flex items-center gap-2 text-sm px-5 py-2.5 rounded-full
+              className="cursor-pointer flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg
                          bg-primary text-primary-foreground hover:opacity-90 transition-all
-                         font-medium shadow-[0_4px_12px_rgba(107,92,231,0.25)] active:scale-[0.97]"
+                         font-medium active:scale-[0.97]"
             >
               <Plus size={14} strokeWidth={2.5} /> New chat
             </button>
           </div>
         ) : (
           <>
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto py-8 pt-20 pb-36">
-              <div className="max-w-[900px] mx-auto px-6 flex flex-col gap-8">
+            <div className="flex-1 overflow-y-auto px-5 py-6">
+              <div className="mx-auto flex max-w-[920px] flex-col gap-8">
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center gap-2 mt-12 text-muted-foreground">
                     <MessageSquare size={22} strokeWidth={1.5} />
-                    <p className="text-sm">Ask questions about the repository. The assistant will retrieve relevant code before answering.</p>
+                    <p className="text-sm">Ask a question. Relevant code references will be attached.</p>
                   </div>
                 )}
                 {messages.map((m, i) => (
@@ -357,8 +353,8 @@ export default function ChatPage() {
                       </div>
                     ) : (
                       <div className="flex gap-3 max-w-[90%]">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#7c6af7]/15 border border-[#7c6af7]/30 flex items-center justify-center mt-1">
-                          <Bot size={16} className="text-[#7c6af7]" />
+                        <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center mt-1">
+                          <Bot size={16} className="text-primary" />
                         </div>
                         <div className="text-[15px] text-foreground leading-relaxed">
                           {m.streaming && !m.content ? (
@@ -375,14 +371,14 @@ export default function ChatPage() {
                             <button
                               onClick={() => setActiveRagIndex(i)}
                               className={cn(
-                                'cursor-pointer mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                                'cursor-pointer mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                                 activeRagIndex === i
-                                  ? 'bg-[#7c6af7]/15 text-[#7c6af7] border border-[#7c6af7]/30'
+                                  ? 'bg-primary/10 text-primary border border-primary/25'
                                   : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
                               )}
                             >
                               <Search size={11} />
-                              Retrieval
+                              References
                               <span className="text-[10px] opacity-60">·{m.ragData.retrieval.length}</span>
                             </button>
                           )}
@@ -395,16 +391,15 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Composer — floating, centered */}
-            <div className="absolute bottom-6 left-0 w-full px-6 flex justify-center pointer-events-none">
-              <div className="w-full max-w-[800px] pointer-events-auto">
-                <div className="composer-card rounded-[24px] border border-border bg-[hsl(var(--sidebar-bg))] p-2.5">
+            <div className="shrink-0 border-t border-border bg-[hsl(var(--sidebar-bg))] p-4">
+              <div className="mx-auto w-full max-w-[900px]">
+                <div className="rounded-lg border border-border bg-card p-2 shadow-sm">
                   <textarea
                     ref={textareaRef}
                     aria-label="Enter a question"
-                    className="input-pill w-full px-4 py-3 text-sm resize-none
-                               bg-transparent text-foreground
-                               placeholder:text-muted-foreground leading-relaxed"
+                    className="w-full resize-none rounded-lg border border-border bg-[hsl(var(--elevated))] px-4 py-3 text-sm
+                               leading-relaxed text-foreground outline-none transition-all
+                               placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
                     style={{ minHeight: '44px', maxHeight: '120px' }}
                     placeholder="Ask about the repository..."
                     value={input}
@@ -412,18 +407,12 @@ export default function ChatPage() {
                     onKeyDown={handleKeyDown}
                     rows={1}
                   />
-                  <div className="flex items-center justify-between px-3 pt-1">
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--hover))] rounded-full transition-colors">
-                        <Plus size={18} />
-                      </button>
-                      <span className="text-[10px] text-muted-foreground/40 font-mono hidden sm:inline">Shift+Enter for newline</span>
-                    </div>
+                  <div className="flex items-center justify-end px-1 pt-2">
                     <div className="flex items-center gap-1.5">
                       {sending ? (
                         <button
                           onClick={handleStop}
-                          className="cursor-pointer flex items-center gap-1.5 px-4 py-1.5 rounded-full
+                          className="cursor-pointer flex items-center gap-1.5 px-4 py-1.5 rounded-lg
                                      text-xs font-medium bg-destructive/10 text-destructive
                                      hover:bg-destructive/20 transition-colors"
                         >
@@ -432,11 +421,12 @@ export default function ChatPage() {
                       ) : (
                         <button
                           onClick={handleSend}
+                          aria-label="Send message"
                           disabled={!input.trim()}
                           className={cn(
-                            'w-9 h-9 flex items-center justify-center rounded-full transition-all',
+                            'w-9 h-9 flex items-center justify-center rounded-lg transition-all',
                             input.trim()
-                              ? 'bg-[#7c6af7] text-white hover:bg-[#6b5ce7] active:scale-95 shadow-md shadow-[#7c6af7]/20'
+                              ? 'bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-hover))] active:scale-95 shadow-md shadow-primary/20'
                               : 'bg-[hsl(var(--hover))] text-muted-foreground cursor-not-allowed'
                           )}
                         >
@@ -446,14 +436,13 @@ export default function ChatPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[11px] text-muted-foreground/40 mt-2">AI can make mistakes. Verify generated code.</p>
+                <p className="mt-2 text-center text-[11px] text-muted-foreground/50">Verify answers against the referenced code.</p>
               </div>
             </div>
           </>
         )}
       </main>
 
-      {/* Right Panel: RAG (persistent) */}
       <RagPanel
         retrieval={activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.retrieval ?? []) : []}
         prompt={activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.prompt ?? null) : null}

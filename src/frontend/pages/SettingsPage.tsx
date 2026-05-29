@@ -1,22 +1,33 @@
 import { useEffect, useState } from 'react'
 import { getSettings, updateSettings } from '@/services/api'
 import type { Settings } from '@/types'
+import { cn } from '@/lib/utils'
 import {
   Cpu, Layers, Database, Save, Loader2, CheckCircle2, Eye, EyeOff, MessageSquare, RotateCcw
 } from 'lucide-react'
 
 const DEFAULT_SYSTEM_PROMPT = `You are a code repository assistant. Answer the user's question using the retrieved code snippets.\nCite concrete file paths and line numbers. Keep the answer concise and accurate.`
-import { cn } from '@/lib/utils'
+
+const SETTINGS_SECTIONS = [
+  { id: 'llm-settings', label: 'LLM', icon: Cpu },
+  { id: 'embedding-settings', label: 'Embeddings', icon: Layers },
+  { id: 'retrieval-settings', label: 'Retrieval', icon: Database },
+  { id: 'prompt-settings', label: 'Prompt', icon: MessageSquare },
+]
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Partial<Settings>>({})
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [showLlmKey, setShowLlmKey] = useState(false)
   const [showEmbedKey, setShowEmbedKey] = useState(false)
 
   useEffect(() => {
-    getSettings().then(s => { setForm(s); setLoading(false) }).catch(console.error)
+    getSettings()
+      .then(s => { setForm(s); setError('') })
+      .catch((e: any) => setError(e.message ?? 'Unable to load settings'))
+      .finally(() => setLoading(false))
   }, [])
 
   const set = (k: keyof Settings, v: string | number) =>
@@ -33,25 +44,49 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-6 text-muted-foreground">Loading...</div>
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  if (loading) return <div className="page-shell text-muted-foreground">Loading...</div>
+
+  if (error) {
+    return (
+      <div className="page-shell">
+        <div className="page-container max-w-4xl">
+          <header className="page-header">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Settings</p>
+              <h1 className="page-title mt-2">Settings</h1>
+              <p className="page-subtitle">Configure model providers, retrieval defaults, and the assistant system prompt.</p>
+            </div>
+          </header>
+          <div className="panel border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-3xl mx-auto space-y-6 pb-12">
-        {/* Header + Save button */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="page-shell">
+      <div className="page-container pb-12">
+        <header className="page-header">
           <div>
-            <h1 className="text-2xl font-semibold mb-1">System Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage model API keys and core RAG retrieval parameters</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Settings</p>
+            <h1 className="page-title mt-2">Settings</h1>
+            <p className="page-subtitle">Configure model providers, retrieval defaults, and the assistant system prompt.</p>
           </div>
           <button
+            type="button"
             onClick={handleSave}
             disabled={saveState === 'saving'}
             className={cn(
-              'inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-md w-32 active:scale-[0.97]',
+              'btn-primary w-32',
               saveState === 'saved'
-                ? 'bg-[#238636] hover:bg-[#2ea043] text-white shadow-[#238636]/20'
-                : 'bg-[#7c6af7] hover:bg-[#6b5ce7] text-white shadow-[#7c6af7]/20'
+                ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white'
+                : ''
             )}
           >
             {saveState === 'saving' && <Loader2 size={16} className="animate-spin" />}
@@ -59,12 +94,28 @@ export default function SettingsPage() {
             {saveState === 'idle' && <Save size={16} />}
             <span>{saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : 'Save'}</span>
           </button>
-        </div>
+        </header>
 
+        <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+          <aside className="panel h-max p-3 lg:sticky lg:top-6">
+            {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
+              <button
+                type="button"
+                key={label}
+                onClick={() => scrollToSection(id)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-[hsl(var(--hover))] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
+          </aside>
+
+          <div className="space-y-5">
         {/* LLM Config */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
+        <section id="llm-settings" className="panel scroll-mt-24 p-5 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Cpu size={18} className="mr-2 text-[#7c6af7]" /> LLM
+            <Cpu size={18} className="mr-2 text-primary" /> LLM
           </h2>
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1.5">API Key</label>
@@ -73,11 +124,13 @@ export default function SettingsPage() {
                 type={showLlmKey ? 'text' : 'password'}
                 value={form.llm_api_key ?? ''}
                 onChange={e => set('llm_api_key', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 pr-10 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors"
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 pr-10 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowLlmKey(!showLlmKey)}
+                aria-label={showLlmKey ? 'Hide LLM API key' : 'Show LLM API key'}
+                title={showLlmKey ? 'Hide LLM API key' : 'Show LLM API key'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showLlmKey ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -88,20 +141,20 @@ export default function SettingsPage() {
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">Base URL</label>
               <input type="text" value={form.llm_base_url ?? ''} onChange={e => set('llm_base_url', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors" />
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors" />
             </div>
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">Model Name</label>
               <input type="text" value={form.llm_model ?? ''} onChange={e => set('llm_model', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors" />
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors" />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Embedding Config */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
+        <section id="embedding-settings" className="panel scroll-mt-24 p-5 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Layers size={18} className="mr-2 text-[#3fb950]" /> Embedding Model
+            <Layers size={18} className="mr-2 text-[hsl(var(--success))]" /> Embedding Model
           </h2>
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1.5">API Key</label>
@@ -110,11 +163,13 @@ export default function SettingsPage() {
                 type={showEmbedKey ? 'text' : 'password'}
                 value={form.embedding_api_key ?? ''}
                 onChange={e => set('embedding_api_key', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 pr-10 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors"
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 pr-10 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowEmbedKey(!showEmbedKey)}
+                aria-label={showEmbedKey ? 'Hide embedding API key' : 'Show embedding API key'}
+                title={showEmbedKey ? 'Hide embedding API key' : 'Show embedding API key'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showEmbedKey ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -125,45 +180,45 @@ export default function SettingsPage() {
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">Base URL</label>
               <input type="text" value={form.embedding_base_url ?? ''} onChange={e => set('embedding_base_url', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors" />
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors" />
             </div>
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">Model Name</label>
               <input type="text" value={form.embedding_model ?? ''} onChange={e => set('embedding_model', e.target.value)}
-                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-[#7c6af7] transition-colors" />
+                className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors" />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Retrieval Params */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
+        <section id="retrieval-settings" className="panel scroll-mt-24 p-5 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Database size={18} className="mr-2 text-[#d29922]" /> Retrieval and Chunking
+            <Database size={18} className="mr-2 text-[hsl(var(--warning))]" /> Retrieval and Chunking
           </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-[#7c6af7] transition-colors focus-within:border-[#7c6af7] focus-within:ring-1 focus-within:ring-[#7c6af7]/50">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-primary transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Chunk Size</label>
               <input type="number" value={form.chunk_size ?? 1000} onChange={e => set('chunk_size', Number(e.target.value))}
                 className="w-full bg-transparent border-none text-foreground font-mono text-xl outline-none" />
             </div>
-            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-[#7c6af7] transition-colors focus-within:border-[#7c6af7] focus-within:ring-1 focus-within:ring-[#7c6af7]/50">
+            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-primary transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Chunk Overlap</label>
               <input type="number" value={form.chunk_overlap ?? 200} onChange={e => set('chunk_overlap', Number(e.target.value))}
                 className="w-full bg-transparent border-none text-foreground font-mono text-xl outline-none" />
             </div>
-            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-[#7c6af7] transition-colors focus-within:border-[#7c6af7] focus-within:ring-1 focus-within:ring-[#7c6af7]/50">
+            <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-primary transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
               <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Top-K</label>
               <input type="number" value={form.top_k ?? 5} onChange={e => set('top_k', Number(e.target.value))}
                 className="w-full bg-transparent border-none text-foreground font-mono text-xl outline-none" />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* System Prompt */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
+        <section id="prompt-settings" className="panel scroll-mt-24 p-5 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
             <h2 className="text-foreground font-medium flex items-center">
-              <MessageSquare size={18} className="mr-2 text-[#e5534b]" /> System Prompt
+              <MessageSquare size={18} className="mr-2 text-destructive" /> System Prompt
             </h2>
             <button
               type="button"
@@ -177,9 +232,11 @@ export default function SettingsPage() {
             value={form.system_prompt ?? ''}
             onChange={e => set('system_prompt', e.target.value)}
             rows={5}
-            className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#7c6af7] transition-colors resize-y"
+            className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-y"
           />
-          <p className="text-xs text-muted-foreground">Customize the system prompt sent to the LLM. It affects response style and behavior for all chats.</p>
+          <p className="text-xs text-muted-foreground">Customize the system prompt sent to the LLM. It affects response style and behavior for all threads.</p>
+        </section>
+          </div>
         </div>
       </div>
     </div>

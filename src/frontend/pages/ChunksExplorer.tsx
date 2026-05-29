@@ -55,63 +55,57 @@ export default function ChunksExplorer() {
     : chunks
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-border flex flex-col gap-3 shrink-0 bg-[hsl(var(--sidebar-bg))]">
-        <h1 className="text-2xl font-semibold">Chunk Browser</h1>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 input-pill">
-            <Database size={14} className="text-muted-foreground mr-2" />
-            <select
-              value={repoId}
-              onChange={e => setRepoId(e.target.value)}
-              className="bg-transparent border-none text-sm text-foreground py-1.5 outline-none appearance-none cursor-pointer pr-4"
-            >
-              {repos.map(r => <option key={r.repo_id} value={r.repo_id}>{r.name}</option>)}
-            </select>
+    <div className="flex h-full flex-col bg-background">
+      <header className="shrink-0 border-b border-border bg-[hsl(var(--sidebar-bg))] px-5 py-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Code Map</p>
+            <h1 className="page-title mt-2">Code Map</h1>
+            <p className="page-subtitle">Browse indexed code chunks and verify their source lines.</p>
           </div>
-          <div className="flex items-center bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 input-pill">
-            <Search size={14} className="text-muted-foreground mr-2" />
-            <input
-              className="bg-transparent border-none text-sm py-1.5 outline-none text-foreground w-48"
-              placeholder="Filter by path or content..."
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-            />
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="field-shell h-10">
+              <Database size={14} className="shrink-0 text-muted-foreground" />
+              <select
+                value={repoId}
+                onChange={e => setRepoId(e.target.value)}
+                className="min-w-40 cursor-pointer appearance-none bg-transparent pr-2 text-sm text-foreground outline-none"
+              >
+                {repos.map(r => <option key={r.repo_id} value={r.repo_id}>{r.name}</option>)}
+              </select>
+            </label>
+            <label className="field-shell h-10">
+              <Search size={14} className="shrink-0 text-muted-foreground" />
+              <input
+                className="input-clean w-56"
+                placeholder="Filter path or content"
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+              />
+            </label>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Stats bar */}
       {stats && (
-        <div className="px-4 py-2 border-b border-border flex gap-3 text-xs shrink-0">
-          <div className="flex-1 rounded-lg bg-[hsl(var(--elevated))] px-3 py-2 text-center">
-            <p className="text-muted-foreground mb-0.5">Total Chunks</p>
-            <p className="font-mono font-semibold text-foreground">{stats.total_chunks}</p>
-          </div>
-          <div className="flex-1 rounded-lg bg-[hsl(var(--elevated))] px-3 py-2 text-center">
-            <p className="text-muted-foreground mb-0.5">Files</p>
-            <p className="font-mono font-semibold text-foreground">{stats.total_files}</p>
-          </div>
-          <div className="flex-1 rounded-lg bg-[hsl(var(--elevated))] px-3 py-2 text-center">
-            <p className="text-muted-foreground mb-0.5">Embed Dim</p>
-            <p className="font-mono font-semibold text-foreground">{stats.embedding_dim || '—'}</p>
-          </div>
-          <div className="flex-1 rounded-lg bg-[hsl(var(--elevated))] px-3 py-2 text-center">
-            <p className="text-muted-foreground mb-0.5">Chunk Size</p>
-            <p className="font-mono font-semibold text-foreground">{stats.chunk_size}</p>
-          </div>
-          <div className="flex-1 rounded-lg bg-[hsl(var(--elevated))] px-3 py-2 text-center">
-            <p className="text-muted-foreground mb-0.5">Overlap</p>
-            <p className="font-mono font-semibold text-foreground">{stats.chunk_overlap}</p>
-          </div>
+        <div className="grid shrink-0 grid-cols-2 gap-px border-b border-border bg-border text-xs md:grid-cols-5">
+          {[
+            ['Total Chunks', stats.total_chunks],
+            ['Files', stats.total_files],
+            ['Embed Dim', stats.embedding_dim || '-'],
+            ['Chunk Size', stats.chunk_size],
+            ['Overlap', stats.chunk_overlap],
+          ].map(([label, value]) => (
+            <div key={label} className="bg-background px-4 py-3">
+              <p className="text-muted-foreground">{label}</p>
+              <p className="mt-1 font-mono font-semibold text-foreground">{value}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Main split */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: chunk list */}
-        <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto bg-[hsl(var(--sidebar-bg))]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+        <div className="max-h-72 w-full shrink-0 overflow-y-auto border-b border-border bg-[hsl(var(--sidebar-bg))] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
           {loading && <p className="p-4 text-sm text-muted-foreground">Loading...</p>}
           {!loading && filtered.length === 0 && (
             <p className="p-4 text-sm text-muted-foreground">No chunk data</p>
@@ -121,25 +115,25 @@ export default function ChunksExplorer() {
               key={chunk.chunk_id}
               onClick={() => handleSelect(chunk)}
               className={cn(
-                'p-3 border-b border-border cursor-pointer transition-colors border-l-4',
+                'cursor-pointer border-b border-l-2 border-border p-3 transition-colors',
                 selected?.chunk_id === chunk.chunk_id
-                  ? 'bg-[#7c6af7]/10 border-l-[#7c6af7]'
-                  : 'border-l-transparent hover:bg-accent/50'
+                  ? 'bg-primary/10 border-l-primary'
+                  : 'border-l-transparent hover:bg-[hsl(var(--hover))]'
               )}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-mono text-[#7c6af7] truncate max-w-[180px]">
+                <span className="max-w-[220px] truncate font-mono text-xs text-primary">
                   {chunk.file_path}
                 </span>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-[hsl(var(--elevated))] px-1.5 py-0.5 rounded">
+                <span className="whitespace-nowrap rounded border border-border bg-[hsl(var(--elevated))] px-1.5 py-0.5 text-[10px] text-muted-foreground">
                   L{chunk.line_start}–{chunk.line_end}
                 </span>
               </div>
-              <p className="text-xs line-clamp-2 font-mono text-muted-foreground leading-relaxed mb-2">{chunk.content}</p>
+              <p className="mb-2 line-clamp-2 font-mono text-xs leading-relaxed text-muted-foreground">{chunk.content}</p>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground/60">{chunk.char_count} chars</span>
                 {chunk.overlap_start != null && (
-                  <span className="text-[10px] text-yellow-500 dark:text-yellow-400">
+                  <span className="text-[10px] text-[hsl(var(--warning))]">
                     Overlap L{chunk.overlap_start}–{chunk.overlap_end}
                   </span>
                 )}
@@ -148,11 +142,13 @@ export default function ChunksExplorer() {
           ))}
         </div>
 
-        {/* Right: source locator */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
+        <div className="flex min-h-[320px] min-w-0 flex-1 flex-col bg-background lg:min-h-0">
           {!selected && (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Select a chunk on the left to view its source location</p>
+              <div className="text-center text-muted-foreground">
+                <Code2 size={24} className="mx-auto mb-2" strokeWidth={1.5} />
+                <p className="text-sm">Select a chunk to view source.</p>
+              </div>
             </div>
           )}
           {selected && !context && (
@@ -162,9 +158,9 @@ export default function ChunksExplorer() {
           )}
           {context && (
             <>
-              <div className="flex items-center gap-2 h-12 px-4 border-b border-border bg-[hsl(var(--elevated))] shrink-0">
-                <Code2 size={14} className="text-[#7c6af7]" />
-                <span className="text-sm font-medium font-mono">{context.file_path}</span>
+              <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-[hsl(var(--elevated))] px-4">
+                <Code2 size={14} className="text-primary" />
+                <span className="truncate font-mono text-sm font-medium">{context.file_path}</span>
                 <span className="text-xs text-muted-foreground ml-auto">
                   L{context.highlight_start}–{context.highlight_end} · {context.total_lines} lines
                 </span>
@@ -196,7 +192,7 @@ function SourceLocator({ context }: { context: ChunkContext }) {
                 key={lineNum}
                 className={cn(
                   isHighlighted
-                    ? 'bg-[#7c6af7]/15 border-l-2 border-l-[#7c6af7]'
+                    ? 'bg-primary/10 border-l-2 border-l-primary'
                     : 'hover:bg-muted/30 border-l-2 border-l-transparent'
                 )}
               >

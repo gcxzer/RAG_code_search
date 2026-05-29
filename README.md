@@ -1,4 +1,4 @@
-# Code Knowledge Assistant v2.0
+# Code Knowledge Assistant
 
 A repository knowledge Q&A system. Add a local repository or upload a ZIP archive, index code into chunks, and ask questions with semantic retrieval.
 
