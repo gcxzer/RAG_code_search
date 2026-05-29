@@ -45,13 +45,11 @@ dist/
 # Runtime data
 data/*
 !data/.gitkeep
-backend/.deepeval/
+src/backend/.deepeval/
 
 # Node / Vite frontend
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+.vite/
 *.tsbuildinfo
 
 # Temporary files

@@ -19,12 +19,12 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-[hsl(var(--background))]">
         <div className="flex items-center gap-2">
           <Cpu size={13} className="text-primary" />
-          <span className="text-sm font-semibold tracking-tight">RAG 过程</span>
+          <span className="text-sm font-semibold tracking-tight">RAG Trace</span>
         </div>
         {streaming && (
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary pulse-dot" />
-            <span className="text-xs text-muted-foreground font-mono">检索中...</span>
+            <span className="text-xs text-muted-foreground font-mono">Retrieving...</span>
           </div>
         )}
         {!streaming && tokens > 0 && (
@@ -41,9 +41,9 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
             <Search size={20} className="text-primary/50" strokeWidth={1.5} />
           </div>
           <div className="text-center">
-            <p className="text-xs font-medium text-foreground/50">等待检索</p>
+            <p className="text-xs font-medium text-foreground/50">Waiting for retrieval</p>
             <p className="text-[11px] text-muted-foreground/40 mt-0.5 leading-relaxed">
-              发送消息后<br />查看 RAG 检索过程
+              Send a message<br />to inspect retrieval
             </p>
           </div>
           {/* Decorative skeleton lines */}
@@ -63,7 +63,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
                 data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
             >
               <FileCode size={11} />
-              结果 {retrieval.length > 0 && <span className="ml-0.5 text-primary">·{retrieval.length}</span>}
+              Results {retrieval.length > 0 && <span className="ml-0.5 text-primary">·{retrieval.length}</span>}
             </Tabs.Trigger>
             <Tabs.Trigger
               value="prompt"
@@ -79,7 +79,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
           {/* Retrieval results */}
           <Tabs.Content value="retrieval" className="flex-1 overflow-y-auto p-3 space-y-2">
             {retrieval.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center mt-8">暂无检索结果</p>
+              <p className="text-xs text-muted-foreground text-center mt-8">No retrieval results</p>
             ) : (
               retrieval.map((r, i) => (
                 <div
@@ -119,7 +119,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
           {/* Prompt parts */}
           <Tabs.Content value="prompt" className="flex-1 overflow-y-auto p-3">
             {!prompt ? (
-              <p className="text-xs text-muted-foreground text-center mt-8">暂无 Prompt 数据</p>
+              <p className="text-xs text-muted-foreground text-center mt-8">No prompt data</p>
             ) : (
               <Tabs.Root defaultValue="system" className="flex flex-col gap-2">
                 <Tabs.List className="flex gap-1 flex-wrap p-1 bg-[hsl(var(--elevated))] rounded-lg shadow-inner">
@@ -144,7 +144,7 @@ export default function RagPanel({ retrieval, prompt, tokens, streaming }: Props
                 {[
                   { value: 'system',  text: prompt.system },
                   { value: 'context', text: prompt.context },
-                  { value: 'history', text: prompt.history.map(m => `[${m.role}]: ${m.content}`).join('\n') || '(无历史)' },
+                  { value: 'history', text: prompt.history.map(m => `[${m.role}]: ${m.content}`).join('\n') || '(no history)' },
                   { value: 'user',    text: prompt.user_message },
                 ].map(({ value, text }) => (
                   <Tabs.Content key={value} value={value}>

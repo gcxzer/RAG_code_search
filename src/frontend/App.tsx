@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import {
   FolderOpen, Layers, Search, MessageSquare, Settings,
-  Sun, Moon
+  Sun, Moon, Braces
 } from 'lucide-react'
 
 import SettingsPage from '@/pages/SettingsPage'
@@ -12,17 +12,17 @@ import ChunksExplorer from '@/pages/ChunksExplorer'
 import SearchPlayground from '@/pages/SearchPlayground'
 import ChatPage from '@/pages/ChatPage'
 
-// 初始化主题（在组件外执行，避免闪烁）
+// Initialize theme outside components to avoid flicker.
 const savedTheme = localStorage.getItem('theme')
 if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark')
 }
 
 const NAV_ITEMS = [
-  { to: '/repos',    label: '仓库管理',   icon: FolderOpen },
-  { to: '/chunks',   label: '分块探查',   icon: Layers },
-  { to: '/search',   label: '语义搜索',   icon: Search },
-  { to: '/chat',     label: 'AI 对话',    icon: MessageSquare },
+  { to: '/repos',    label: 'Repositories', icon: FolderOpen },
+  { to: '/chunks',   label: 'Chunks',       icon: Layers },
+  { to: '/search',   label: 'Search',       icon: Search },
+  { to: '/chat',     label: 'AI Chat',      icon: MessageSquare },
 ]
 
 function useTheme() {
@@ -43,8 +43,9 @@ function IconRail() {
   const { dark, toggle } = useTheme()
   return (
     <nav className="w-16 shrink-0 border-r border-border bg-[hsl(var(--background))] flex flex-col items-center py-4 gap-1">
-      {/* Logo */}
-      <img src="/logo.svg" alt="代码知识助手" className="w-9 h-9 rounded-lg mb-3 shadow-lg shadow-[#7c6af7]/20" />
+      <div className="w-9 h-9 rounded-lg mb-3 bg-[#7c6af7]/10 text-[#7c6af7] flex items-center justify-center">
+        <Braces size={18} />
+      </div>
 
       {/* Main nav icons */}
       {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
@@ -77,7 +78,7 @@ function IconRail() {
       {/* Settings */}
       <NavLink
         to="/settings"
-        title="系统设置"
+        title="Settings"
         className={({ isActive }) =>
           cn(
             'relative w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-150',
@@ -101,7 +102,7 @@ function IconRail() {
       <button
         type="button"
         onClick={toggle}
-        title={dark ? '切换浅色' : '切换深色'}
+        title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
         className="w-10 h-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--hover))] transition-colors"
       >
         {dark ? <Sun size={16} /> : <Moon size={16} />}
@@ -115,10 +116,11 @@ function FullSidebar() {
   const { dark, toggle } = useTheme()
   return (
     <nav className="w-48 shrink-0 border-r border-border bg-[hsl(var(--sidebar-bg))] flex flex-col py-4 gap-1 px-2">
-      {/* Logo header */}
       <div className="flex items-center gap-2.5 px-3 pb-4">
-        <img src="/logo.svg" alt="代码知识助手" className="w-8 h-8 rounded-lg shadow-lg shadow-[#7c6af7]/20 shrink-0" />
-        <span className="font-semibold text-sm tracking-tight">代码知识助手</span>
+        <span className="w-8 h-8 rounded-lg bg-[#7c6af7]/10 text-[#7c6af7] flex items-center justify-center shrink-0">
+          <Braces size={16} />
+        </span>
+        <span className="font-semibold text-sm tracking-tight">Code Assistant</span>
       </div>
 
       {/* Main nav items */}
@@ -155,18 +157,18 @@ function FullSidebar() {
         }
       >
         <Settings size={15} />
-        系统设置
+        Settings
       </NavLink>
 
       {/* Theme toggle */}
       <button
         type="button"
         onClick={toggle}
-        title={dark ? '切换浅色' : '切换深色'}
+        title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
         className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--hover))] transition-colors"
       >
         {dark ? <Sun size={15} /> : <Moon size={15} />}
-        {dark ? '浅色模式' : '深色模式'}
+        {dark ? 'Light mode' : 'Dark mode'}
       </button>
     </nav>
   )

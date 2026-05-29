@@ -57,7 +57,7 @@ def add_repo_from_upload(zip_path: str, name: str | None = None) -> dict:
             zf.extractall(extract_dir)
     except zipfile.BadZipFile:
         shutil.rmtree(extract_dir, ignore_errors=True)
-        raise ValueError("上传的文件不是有效的 zip 压缩包")
+        raise ValueError("Uploaded file is not a valid zip archive")
     finally:
         os.remove(zip_path)
 

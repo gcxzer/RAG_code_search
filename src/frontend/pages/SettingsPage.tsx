@@ -5,7 +5,7 @@ import {
   Cpu, Layers, Database, Save, Loader2, CheckCircle2, Eye, EyeOff, MessageSquare, RotateCcw
 } from 'lucide-react'
 
-const DEFAULT_SYSTEM_PROMPT = `你是一个代码库智能助手。根据检索到的代码片段回答用户问题。\n回答时请引用具体的文件路径和行号，保持简洁准确。`
+const DEFAULT_SYSTEM_PROMPT = `You are a code repository assistant. Answer the user's question using the retrieved code snippets.\nCite concrete file paths and line numbers. Keep the answer concise and accurate.`
 import { cn } from '@/lib/utils'
 
 export default function SettingsPage() {
@@ -33,7 +33,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-6 text-muted-foreground">加载中...</div>
+  if (loading) return <div className="p-6 text-muted-foreground">Loading...</div>
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -41,8 +41,8 @@ export default function SettingsPage() {
         {/* Header + Save button */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold mb-1">系统配置</h1>
-            <p className="text-sm text-muted-foreground">管理模型 API 密钥与 RAG 核心检索参数</p>
+            <h1 className="text-2xl font-semibold mb-1">System Settings</h1>
+            <p className="text-sm text-muted-foreground">Manage model API keys and core RAG retrieval parameters</p>
           </div>
           <button
             onClick={handleSave}
@@ -57,14 +57,14 @@ export default function SettingsPage() {
             {saveState === 'saving' && <Loader2 size={16} className="animate-spin" />}
             {saveState === 'saved' && <CheckCircle2 size={16} />}
             {saveState === 'idle' && <Save size={16} />}
-            <span>{saveState === 'saving' ? '保存中...' : saveState === 'saved' ? '已保存' : '保存设置'}</span>
+            <span>{saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : 'Save'}</span>
           </button>
         </div>
 
         {/* LLM Config */}
         <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Cpu size={18} className="mr-2 text-[#7c6af7]" /> LLM 大语言模型
+            <Cpu size={18} className="mr-2 text-[#7c6af7]" /> LLM
           </h2>
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1.5">API Key</label>
@@ -101,7 +101,7 @@ export default function SettingsPage() {
         {/* Embedding Config */}
         <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Layers size={18} className="mr-2 text-[#3fb950]" /> Embedding 向量模型
+            <Layers size={18} className="mr-2 text-[#3fb950]" /> Embedding Model
           </h2>
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1.5">API Key</label>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
         {/* Retrieval Params */}
         <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <h2 className="text-foreground font-medium flex items-center border-b border-border pb-3 mb-4">
-            <Database size={18} className="mr-2 text-[#d29922]" /> 检索与分块参数
+            <Database size={18} className="mr-2 text-[#d29922]" /> Retrieval and Chunking
           </h2>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-[hsl(var(--elevated))] p-4 rounded-lg border border-border hover:border-[#7c6af7] transition-colors focus-within:border-[#7c6af7] focus-within:ring-1 focus-within:ring-[#7c6af7]/50">
@@ -163,14 +163,14 @@ export default function SettingsPage() {
         <div className="bg-card border border-border rounded-xl p-6 space-y-5 transition-colors hover:border-[hsl(var(--border-hover))]">
           <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
             <h2 className="text-foreground font-medium flex items-center">
-              <MessageSquare size={18} className="mr-2 text-[#e5534b]" /> 系统提示词
+              <MessageSquare size={18} className="mr-2 text-[#e5534b]" /> System Prompt
             </h2>
             <button
               type="button"
               onClick={() => set('system_prompt', DEFAULT_SYSTEM_PROMPT)}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <RotateCcw size={14} /> 恢复默认
+              <RotateCcw size={14} /> Restore default
             </button>
           </div>
           <textarea
@@ -179,7 +179,7 @@ export default function SettingsPage() {
             rows={5}
             className="w-full bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#7c6af7] transition-colors resize-y"
           />
-          <p className="text-xs text-muted-foreground">自定义发送给 LLM 的系统提示词，影响所有对话的回答风格与行为</p>
+          <p className="text-xs text-muted-foreground">Customize the system prompt sent to the LLM. It affects response style and behavior for all chats.</p>
         </div>
       </div>
     </div>

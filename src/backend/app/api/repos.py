@@ -26,7 +26,7 @@ async def upload_repo(
     name: str = Form(default=""),
 ):
     if not file.filename or not file.filename.endswith(".zip"):
-        raise HTTPException(status_code=400, detail="仅支持 .zip 格式的压缩文件")
+        raise HTTPException(status_code=400, detail="Only .zip archives are supported")
     # Save to temp file then hand off to repo_service
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
     try:

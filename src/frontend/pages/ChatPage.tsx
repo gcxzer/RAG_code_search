@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Cpu } from 'lucide-react'
+import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Cpu, Bot, Braces } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { listRepos, listSessions, createSession, deleteSession, chatStream } from '@/services/api'
@@ -23,11 +23,11 @@ interface Message {
 function formatRelativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '刚刚'
-  if (mins < 60) return `${mins}m 前`
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h 前`
-  return `${Math.floor(hours / 24)}d 前`
+  if (hours < 24) return `${hours}h ago`
+  return `${Math.floor(hours / 24)}d ago`
 }
 
 export default function ChatPage() {
@@ -191,7 +191,7 @@ export default function ChatPage() {
         {/* Repo selector */}
         <div className="px-4 pt-4 pb-2 shrink-0">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">
-            代码库
+            Repository
           </label>
           {repos.length === 0 ? (
             <button
@@ -201,7 +201,7 @@ export default function ChatPage() {
                          hover:bg-[#7c6af7]/15 hover:border-[#7c6af7]/35 transition-all w-full justify-center"
             >
               <FolderOpen size={13} />
-              添加代码库
+              Add repository
             </button>
           ) : (
             <div className="relative">
@@ -232,7 +232,7 @@ export default function ChatPage() {
                        active:scale-[0.98]"
           >
             <Plus size={12} strokeWidth={2.5} />
-            新建会话
+            New chat
           </button>
         </div>
 
@@ -243,7 +243,7 @@ export default function ChatPage() {
           {sessions.length === 0 ? (
             <div className="flex flex-col items-center gap-2 mt-10 text-muted-foreground px-4">
               <MessageSquare size={18} strokeWidth={1.5} />
-              <p className="text-xs text-center">暂无会话，点击新建开始</p>
+              <p className="text-xs text-center">No chats yet. Start a new one.</p>
             </div>
           ) : (
             sessions.map((s, i) => (
@@ -272,11 +272,11 @@ export default function ChatPage() {
                       'text-sm truncate font-medium leading-5 transition-colors',
                       activeSession?.session_id === s.session_id ? 'text-[#7c6af7]' : 'text-foreground'
                     )}>
-                      {s.messages.length > 0 ? s.messages[0].content.slice(0, 28) + '…' : '新会话'}
+                      {s.messages.length > 0 ? s.messages[0].content.slice(0, 28) + '...' : 'New chat'}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {s.messages.length > 0 && (
-                        <span className="text-xs text-muted-foreground/70 font-mono">{s.messages.length}条</span>
+                        <span className="text-xs text-muted-foreground/70 font-mono">{s.messages.length} msgs</span>
                       )}
                       {s.updated_at && <span className="text-xs text-muted-foreground/50">·</span>}
                       {s.updated_at && <p className="text-xs text-muted-foreground/60">{formatRelativeTime(s.updated_at)}</p>}
@@ -285,7 +285,7 @@ export default function ChatPage() {
                 </div>
                 <button
                   onClick={e => handleDeleteSession(s.session_id, e)}
-                  aria-label="删除会话"
+                  aria-label="Delete chat"
                   className="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded
                              text-muted-foreground hover:text-destructive hover:bg-destructive/10
                              ml-1 mt-0.5 shrink-0 transition-all"
@@ -306,7 +306,7 @@ export default function ChatPage() {
           {repoId && repos.find(r => r.repo_id === repoId) && (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(var(--elevated))] border border-border text-xs text-muted-foreground">
               <Database size={11} className="text-[#7c6af7]" />
-              <span>作用域:</span>
+              <span>Scope:</span>
               <span className="text-foreground font-medium">{repos.find(r => r.repo_id === repoId)?.name}</span>
             </div>
           )}
@@ -317,13 +317,13 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5
                             flex items-center justify-center
-                            shadow-[0_8px_24px_rgba(107,92,231,0.15)] overflow-hidden">
-              <img src="/logo.svg" alt="代码知识助手" className="w-10 h-10 object-contain" />
+                            shadow-[0_8px_24px_rgba(107,92,231,0.15)]">
+              <Braces size={30} className="text-primary" />
             </div>
             <div className="text-center space-y-2">
-              <h2 className="text-xl font-semibold text-foreground tracking-tight">代码知识助手</h2>
+              <h2 className="text-xl font-semibold text-foreground tracking-tight">Code Assistant</h2>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-[220px]">
-                选择代码库，新建会话<br />向代码提问，获取精准答案
+                Select a repository and start a chat<br />Ask questions about code and get precise answers
               </p>
             </div>
             <button
@@ -332,7 +332,7 @@ export default function ChatPage() {
                          bg-primary text-primary-foreground hover:opacity-90 transition-all
                          font-medium shadow-[0_4px_12px_rgba(107,92,231,0.25)] active:scale-[0.97]"
             >
-              <Plus size={14} strokeWidth={2.5} /> 新建会话
+              <Plus size={14} strokeWidth={2.5} /> New chat
             </button>
           </div>
         ) : (
@@ -343,7 +343,7 @@ export default function ChatPage() {
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center gap-2 mt-12 text-muted-foreground">
                     <MessageSquare size={22} strokeWidth={1.5} />
-                    <p className="text-sm">向代码库提问，RAG 助手将检索相关代码片段后回答</p>
+                    <p className="text-sm">Ask questions about the repository. The assistant will retrieve relevant code before answering.</p>
                   </div>
                 )}
                 {messages.map((m, i) => (
@@ -357,9 +357,8 @@ export default function ChatPage() {
                       </div>
                     ) : (
                       <div className="flex gap-3 max-w-[90%]">
-                        {/* Logo avatar */}
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#7c6af7]/15 border border-[#7c6af7]/30 flex items-center justify-center mt-1 overflow-hidden">
-                          <img src="/logo.svg" alt="AI" className="w-5 h-5 object-contain" />
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#7c6af7]/15 border border-[#7c6af7]/30 flex items-center justify-center mt-1">
+                          <Bot size={16} className="text-[#7c6af7]" />
                         </div>
                         <div className="text-[15px] text-foreground leading-relaxed">
                           {m.streaming && !m.content ? (
@@ -383,7 +382,7 @@ export default function ChatPage() {
                               )}
                             >
                               <Search size={11} />
-                              检索过程
+                              Retrieval
                               <span className="text-[10px] opacity-60">·{m.ragData.retrieval.length}</span>
                             </button>
                           )}
@@ -402,12 +401,12 @@ export default function ChatPage() {
                 <div className="composer-card rounded-[24px] border border-border bg-[hsl(var(--sidebar-bg))] p-2.5">
                   <textarea
                     ref={textareaRef}
-                    aria-label="输入问题"
+                    aria-label="Enter a question"
                     className="input-pill w-full px-4 py-3 text-sm resize-none
                                bg-transparent text-foreground
                                placeholder:text-muted-foreground leading-relaxed"
                     style={{ minHeight: '44px', maxHeight: '120px' }}
-                    placeholder="向代码库提问..."
+                    placeholder="Ask about the repository..."
                     value={input}
                     onChange={handleInput}
                     onKeyDown={handleKeyDown}
@@ -418,7 +417,7 @@ export default function ChatPage() {
                       <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--hover))] rounded-full transition-colors">
                         <Plus size={18} />
                       </button>
-                      <span className="text-[10px] text-muted-foreground/40 font-mono hidden sm:inline">Shift+Enter 换行</span>
+                      <span className="text-[10px] text-muted-foreground/40 font-mono hidden sm:inline">Shift+Enter for newline</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       {sending ? (
@@ -428,7 +427,7 @@ export default function ChatPage() {
                                      text-xs font-medium bg-destructive/10 text-destructive
                                      hover:bg-destructive/20 transition-colors"
                         >
-                          <Square size={12} /> 停止
+                          <Square size={12} /> Stop
                         </button>
                       ) : (
                         <button
@@ -447,7 +446,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[11px] text-muted-foreground/40 mt-2">AI 可能会犯错，请核对生成的代码。</p>
+                <p className="text-center text-[11px] text-muted-foreground/40 mt-2">AI can make mistakes. Verify generated code.</p>
               </div>
             </div>
           </>

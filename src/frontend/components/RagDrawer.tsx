@@ -23,7 +23,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="RAG 过程"
+        aria-label="RAG Trace"
         className={`fixed top-0 right-0 h-full w-[340px] z-50 flex flex-col
           bg-[hsl(var(--sidebar-bg))] border-l border-border shadow-2xl
           transition-transform duration-300 ease-in-out
@@ -33,12 +33,12 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <Cpu size={14} className="text-primary" />
-            <span className="font-semibold text-sm tracking-tight">RAG 过程</span>
+            <span className="font-semibold text-sm tracking-tight">RAG Trace</span>
           </div>
           <button
             onClick={onClose}
             className="cursor-pointer p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="关闭"
+            aria-label="Close"
           >
             <X size={15} />
           </button>
@@ -49,7 +49,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
           {retrieval.length === 0 && !prompt ? (
             <div className="flex flex-col items-center justify-center mt-16 gap-3 text-muted-foreground">
               <Search size={28} strokeWidth={1.5} />
-              <p className="text-xs text-center">发送消息后<br />查看 RAG 检索过程</p>
+              <p className="text-xs text-center">Send a message<br />to inspect retrieval</p>
             </div>
           ) : (
             <>
@@ -58,7 +58,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
                   <div className="flex items-center gap-1.5 px-1 mb-2">
                     <FileCode size={12} className="text-primary" />
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                      检索结果 · {retrieval.length} 条
+                      Retrieval Results · {retrieval.length}
                     </span>
                   </div>
                   {retrieval.map((r, i) => (
@@ -86,7 +86,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
                     <div className="flex items-center gap-1.5">
                       <Cpu size={12} className="text-primary" />
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                        Prompt 构成
+                        Prompt Parts
                       </span>
                     </div>
                     <span className="text-xs font-mono text-muted-foreground">~{tokens} tokens</span>
@@ -114,7 +114,7 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
                     {[
                       { value: 'system', text: prompt.system },
                       { value: 'context', text: prompt.context },
-                      { value: 'history', text: prompt.history.map(m => `[${m.role}]: ${m.content}`).join('\n') || '(无历史)' },
+                      { value: 'history', text: prompt.history.map(m => `[${m.role}]: ${m.content}`).join('\n') || '(no history)' },
                       { value: 'user', text: prompt.user_message },
                     ].map(({ value, text }) => (
                       <Tabs.Content key={value} value={value}>
@@ -133,4 +133,3 @@ export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: 
     </>
   )
 }
-

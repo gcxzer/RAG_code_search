@@ -65,8 +65,8 @@ export default function SearchPlayground() {
           <div className="mb-8 space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <h1 className="text-2xl font-semibold mb-1">语义检索游乐场</h1>
-                <p className="text-sm text-muted-foreground">通过自然语言直接进行向量检索，探索知识库命中情况。</p>
+                <h1 className="text-2xl font-semibold mb-1">Semantic Search Playground</h1>
+                <p className="text-sm text-muted-foreground">Run vector search directly with natural language and inspect repository matches.</p>
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 py-1.5 input-pill">
@@ -99,14 +99,14 @@ export default function SearchPlayground() {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground py-2 text-[15px]"
-                placeholder="输入自然语言查询，如：如何读取配置文件"
+                placeholder="Ask a natural-language query, e.g. how is configuration loaded?"
               />
               <button
                 onClick={handleSearch}
                 disabled={searching || !repoId}
                 className="rounded-xl px-6 h-10 ml-2 bg-[#7c6af7] text-white text-sm font-medium hover:bg-[#6b5ce7] disabled:opacity-50 transition-colors active:scale-[0.97]"
               >
-                {searching ? <Loader2 size={18} className="animate-spin" /> : '开始检索'}
+                {searching ? <Loader2 size={18} className="animate-spin" /> : 'Search'}
               </button>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function SearchPlayground() {
               >
                 <Cpu size={24} className="text-[#7c6af7] animate-pulse" />
               </div>
-              <p className="text-sm animate-pulse">正在将查询转化为向量并进行相似度计算...</p>
+              <p className="text-sm animate-pulse">Embedding the query and calculating similarity...</p>
             </div>
           )}
 
@@ -136,7 +136,7 @@ export default function SearchPlayground() {
                 <div className="bg-[hsl(var(--sidebar-bg))] border border-border px-2 py-1.5 rounded flex-1 text-foreground truncate">
                   [{result.query_embedding_preview.map(v => v.toFixed(4)).join(', ')}]
                 </div>
-                <span className="shrink-0">· 共搜索 {result.total_searched} 个 chunk</span>
+                <span className="shrink-0">· searched {result.total_searched} chunks</span>
               </div>
 
               {/* Result cards */}
@@ -175,7 +175,7 @@ export default function SearchPlayground() {
                         className="flex items-center gap-1.5 text-xs font-medium text-[#7c6af7] hover:text-foreground transition-colors"
                       >
                         {locating === r.chunk_id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {locating === r.chunk_id ? '收起原文' : '查看原文'}
+                        {locating === r.chunk_id ? 'Hide source' : 'View source'}
                       </button>
                       {locating === r.chunk_id && locatorCtx && (
                         <div className="mt-3 msg-in">
@@ -194,9 +194,9 @@ export default function SearchPlayground() {
                     onClick={() => setShowPrompt(p => !p)}
                     className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--elevated))] text-sm font-medium hover:bg-[hsl(var(--hover))] transition-colors"
                   >
-                    <span>Prompt 预览</span>
+                    <span>Prompt Preview</span>
                     <span className="text-xs text-muted-foreground flex items-center gap-2">
-                      预估 Token: ~{preview.total_tokens_estimate}
+                      Estimated tokens: ~{preview.total_tokens_estimate}
                       {showPrompt ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </span>
                   </button>
@@ -206,7 +206,7 @@ export default function SearchPlayground() {
                       <PromptSection color="green" label="Context" content={preview.prompt_parts.context} />
                       <PromptSection color="yellow" label="History"
                         content={preview.prompt_parts.history.length === 0
-                          ? '(无历史对话)'
+                          ? '(no conversation history)'
                           : preview.prompt_parts.history.map(m => `[${m.role}]: ${m.content}`).join('\n')}
                       />
                       <PromptSection color="red" label="User" content={preview.prompt_parts.user_message} />

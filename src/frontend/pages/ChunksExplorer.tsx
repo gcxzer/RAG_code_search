@@ -58,7 +58,7 @@ export default function ChunksExplorer() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-border flex flex-col gap-3 shrink-0 bg-[hsl(var(--sidebar-bg))]">
-        <h1 className="text-2xl font-semibold">代码分块浏览器</h1>
+        <h1 className="text-2xl font-semibold">Chunk Browser</h1>
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 input-pill">
             <Database size={14} className="text-muted-foreground mr-2" />
@@ -74,7 +74,7 @@ export default function ChunksExplorer() {
             <Search size={14} className="text-muted-foreground mr-2" />
             <input
               className="bg-transparent border-none text-sm py-1.5 outline-none text-foreground w-48"
-              placeholder="按路径或内容过滤..."
+              placeholder="Filter by path or content..."
               value={filter}
               onChange={e => setFilter(e.target.value)}
             />
@@ -112,9 +112,9 @@ export default function ChunksExplorer() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: chunk list */}
         <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto bg-[hsl(var(--sidebar-bg))]">
-          {loading && <p className="p-4 text-sm text-muted-foreground">加载中...</p>}
+          {loading && <p className="p-4 text-sm text-muted-foreground">Loading...</p>}
           {!loading && filtered.length === 0 && (
-            <p className="p-4 text-sm text-muted-foreground">无 chunk 数据</p>
+            <p className="p-4 text-sm text-muted-foreground">No chunk data</p>
           )}
           {filtered.map(chunk => (
             <div
@@ -152,12 +152,12 @@ export default function ChunksExplorer() {
         <div className="flex-1 flex flex-col min-w-0 bg-background">
           {!selected && (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">← 点击左侧 chunk 查看原文定位</p>
+              <p className="text-sm text-muted-foreground">Select a chunk on the left to view its source location</p>
             </div>
           )}
           {selected && !context && (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">加载原文...</p>
+              <p className="text-sm text-muted-foreground">Loading source...</p>
             </div>
           )}
           {context && (
@@ -166,7 +166,7 @@ export default function ChunksExplorer() {
                 <Code2 size={14} className="text-[#7c6af7]" />
                 <span className="text-sm font-medium font-mono">{context.file_path}</span>
                 <span className="text-xs text-muted-foreground ml-auto">
-                  L{context.highlight_start}–{context.highlight_end} · {context.total_lines} 行
+                  L{context.highlight_start}–{context.highlight_end} · {context.total_lines} lines
                 </span>
               </div>
               <div className="flex-1 overflow-auto">

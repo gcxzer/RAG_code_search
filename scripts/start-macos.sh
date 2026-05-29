@@ -1,108 +1,103 @@
 #!/bin/bash
 
 # ============================================
-#   Code Knowledge Assistant - 一键启动脚本
-#   适用于 macOS
+#   Code Knowledge Assistant - one-command startup
+#   For macOS
 # ============================================
 
 set -e
 
-# 颜色定义
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 获取项目根目录
+# Project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo ""
 echo "============================================"
-echo "  Code Knowledge Assistant v2.0 - 一键启动脚本"
+echo "  Code Knowledge Assistant v2.0 - Startup"
 echo "============================================"
 echo ""
 
-# 检查 uv
+# Check uv
 if ! command -v uv &> /dev/null; then
-    echo -e "${RED}[错误] 未找到 uv，请先安装 uv: https://docs.astral.sh/uv/${NC}"
+    echo -e "${RED}[Error] uv was not found. Install uv first: https://docs.astral.sh/uv/${NC}"
     exit 1
 fi
 
-# 检查 Node.js
+# Check Node.js
 if ! command -v node &> /dev/null; then
-    echo -e "${RED}[错误] 未找到 Node.js，请先安装 Node.js 18+${NC}"
+    echo -e "${RED}[Error] Node.js was not found. Install Node.js 18+ first${NC}"
     exit 1
 fi
 
-echo -e "${BLUE}[信息] uv 版本:${NC} $(uv --version)"
-echo -e "${BLUE}[信息] Node.js 版本:${NC} $(node --version)"
+echo -e "${BLUE}[Info] uv version:${NC} $(uv --version)"
+echo -e "${BLUE}[Info] Node.js version:${NC} $(node --version)"
 echo ""
 
-# ========== 步骤 1: Python 环境 ==========
-echo -e "${YELLOW}[步骤 1/3] 同步 Python 环境和后端依赖...${NC}"
+# ========== Step 1: Python environment ==========
+echo -e "${YELLOW}[Step 1/3] Syncing Python environment and backend dependencies...${NC}"
 uv sync --all-groups
-echo -e "${GREEN}[成功] Python 环境同步完成${NC}"
+echo -e "${GREEN}[OK] Python environment synced${NC}"
 
-# ========== 步骤 2: 前端依赖 ==========
+# ========== Step 2: Frontend dependencies ==========
 echo ""
-echo -e "${YELLOW}[步骤 2/3] 安装前端依赖...${NC}"
-cd frontend
+echo -e "${YELLOW}[Step 2/3] Installing frontend dependencies...${NC}"
 if [ ! -d "node_modules" ]; then
-    echo -e "${BLUE}[信息] 首次安装，运行 npm install...${NC}"
+    echo -e "${BLUE}[Info] First install detected, running npm install...${NC}"
     npm install
 else
-    echo -e "${BLUE}[信息] node_modules 已存在，跳过安装${NC}"
+    echo -e "${BLUE}[Info] node_modules already exists, skipping install${NC}"
 fi
-cd ..
-echo -e "${GREEN}[成功] 前端依赖检查完成${NC}"
+echo -e "${GREEN}[OK] Frontend dependencies are ready${NC}"
 echo ""
 
-# ========== 步骤 3: 启动服务 ==========
-echo -e "${YELLOW}[步骤 3/3] 启动服务...${NC}"
+# ========== Step 3: Start services ==========
+echo -e "${YELLOW}[Step 3/3] Starting services...${NC}"
 echo ""
-echo "  后端 API:  http://localhost:8000"
-echo "  前端界面:  http://localhost:5173"
-echo "  API 文档:  http://localhost:8000/docs"
+echo "  Backend API:  http://localhost:8000"
+echo "  Frontend UI:  http://localhost:5173"
+echo "  API docs:     http://localhost:8000/docs"
 echo ""
 echo "============================================"
-echo "  按 Ctrl+C 停止所有服务"
+echo "  Press Ctrl+C to stop all services"
 echo "============================================"
 echo ""
 
-# 存储后台进程 PID
+# Background process PID
 BACKEND_PID=""
 
-# 清理函数
+# Cleanup
 cleanup() {
     echo ""
-    echo -e "${YELLOW}[信息] 正在停止服务...${NC}"
+    echo -e "${YELLOW}[Info] Stopping services...${NC}"
     if [ ! -z "$BACKEND_PID" ]; then
         kill $BACKEND_PID 2>/dev/null || true
     fi
-    echo -e "${GREEN}[成功] 服务已停止${NC}"
+    echo -e "${GREEN}[OK] Services stopped${NC}"
     exit 0
 }
 
-# 捕获 Ctrl+C
+# Catch Ctrl+C
 trap cleanup SIGINT SIGTERM
 
-# 启动后端（后台运行）
-echo -e "${BLUE}[信息] 启动后端服务...${NC}"
-cd backend
-uv run --project .. python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+# Start backend in the background
+echo -e "${BLUE}[Info] Starting backend service...${NC}"
+uv run --project . --directory src/backend python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
 BACKEND_PID=$!
-cd ..
 
-# 等待后端启动
-echo -e "${BLUE}[信息] 等待后端启动...${NC}"
+# Wait for backend startup
+echo -e "${BLUE}[Info] Waiting for backend startup...${NC}"
 sleep 3
 
-# 启动前端（前台运行）
-echo -e "${BLUE}[信息] 启动前端服务...${NC}"
-cd frontend
+# Start frontend in the foreground
+echo -e "${BLUE}[Info] Starting frontend service...${NC}"
 npm run dev
 
-# 如果前端退出，清理后端
+# If the frontend exits, stop the backend
 cleanup

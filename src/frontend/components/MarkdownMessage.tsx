@@ -34,9 +34,9 @@ function CodeBlock({ language, code }: CodeBlockProps) {
               className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {collapsed ? (
-                <><ChevronDown size={12} /> 展开 ({lineCount} 行)</>
+                <><ChevronDown size={12} /> Expand ({lineCount} lines)</>
               ) : (
-                <><ChevronUp size={12} /> 折叠</>
+                <><ChevronUp size={12} /> Collapse</>
               )}
             </button>
           )}
@@ -45,9 +45,9 @@ function CodeBlock({ language, code }: CodeBlockProps) {
             className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {copied ? (
-              <><Check size={12} className="text-primary" /> 已复制</>
+              <><Check size={12} className="text-primary" /> Copied</>
             ) : (
-              <><Copy size={12} /> 复制</>
+              <><Copy size={12} /> Copy</>
             )}
           </button>
         </div>
@@ -159,4 +159,3 @@ export default function MarkdownMessage({ content }: Props) {
     </div>
   )
 }
-

@@ -152,7 +152,7 @@ async def chat_stream(
     # Step 3: LLM stream
     messages = [{"role": "system", "content": system_prompt}]
     if context_str:
-        messages.append({"role": "system", "content": f"代码上下文:\n{context_str}"})
+        messages.append({"role": "system", "content": f"Code context:\n{context_str}"})
     for m in history:
         messages.append(m)
     messages.append({"role": "user", "content": message})

@@ -1,119 +1,142 @@
 # Code Knowledge Assistant v2.0
 
-代码库知识问答系统 — 上传代码库，自动分块索引，通过语义检索向代码提问并获取精准答案。
+A repository knowledge Q&A system. Add a local repository or upload a ZIP archive, index code into chunks, and ask questions with semantic retrieval.
 
-## 核心功能
+## Core Features
 
-- **代码库管理** — 本地路径添加或 ZIP 上传，自动扫描 Python 文件
-- **智能分块** — 按字符数分块，支持重叠，对齐行边界
-- **向量检索** — ChromaDB 存储 + 余弦相似度搜索
-- **RAG 对话** — 检索相关代码片段后，LLM 流式回答并引用文件路径和行号
-- **分块可视化** — 查看每个 chunk 在原文件中的精确位置
-- **检索过程回溯** — 每轮对话的 RAG 检索数据持久化，支持历史查看
+- **Repository management** - Add a local path or upload a ZIP archive, then index Python files.
+- **Code chunking** - Split files by character count with overlap and line-boundary alignment.
+- **Vector search** - Store embeddings in ChromaDB and search by cosine similarity.
+- **RAG chat** - Retrieve relevant code snippets before streaming LLM answers with file paths and line numbers.
+- **Chunk inspection** - View the exact source location for every indexed chunk.
+- **Retrieval trace** - Persist RAG retrieval data for each chat turn and inspect it later.
 
-## 技术栈
+## Tech Stack
 
-| 层 | 技术 |
+| Layer | Technology |
 |---|------|
-| 前端 | React 18 + TypeScript + Vite + Tailwind CSS |
-| 后端 | FastAPI + Python |
-| 向量库 | ChromaDB (cosine) |
-| LLM | OpenAI 兼容 API (可配置) |
-| Embedding | text-embedding-3-small (可配置) |
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
+| Backend | FastAPI + Python |
+| Vector store | ChromaDB (cosine) |
+| LLM | OpenAI-compatible API (configurable) |
+| Embedding | text-embedding-3-small (configurable) |
 
-## 项目结构
+## Project Structure
 
 ```
 code-knowledge-assistant/
-├── pyproject.toml           # Python 项目与依赖配置
-├── uv.lock                  # uv 锁文件
-├── .python-version          # uv 使用的 Python 版本
-├── data/                    # 数据存储 (JSON + ChromaDB)
-├── backend/                 # 后端 (FastAPI)
-│   ├── app/
-│   │   ├── api/             # API 端点 (repos, chunks, search, chat, settings)
-│   │   ├── services/        # 业务逻辑 (索引, 检索, 对话, LLM客户端)
-│   │   ├── config/          # 配置管理
-│   │   └── main.py          # FastAPI 入口
-│   └── tests/
-├── frontend/                # 前端 (React + Vite)
-│   └── src/
-│       ├── pages/           # 页面 (Chat, Repos, Chunks, Search, Settings)
-│       ├── components/      # 组件 (MarkdownMessage, RagPanel)
-│       ├── services/        # API 客户端
-│       └── types/           # TypeScript 类型
-├── scripts/                 # 启动脚本
+├── pyproject.toml           # Python project and dependency configuration
+├── uv.lock                  # uv lock file
+├── package.json             # Frontend dependencies and scripts
+├── package-lock.json        # npm lock file
+├── vite.config.ts           # Vite configuration
+├── tsconfig.json            # TypeScript project references
+├── tsconfig.app.json        # Frontend TypeScript configuration
+├── tsconfig.node.json       # Vite/Node TypeScript configuration
+├── tailwind.config.js       # Tailwind configuration
+├── postcss.config.js        # PostCSS configuration
+├── index.html               # Frontend HTML entry
+├── public/                  # Static assets
+├── .python-version          # Python version used by uv
+├── data/                    # Runtime data storage (JSON + ChromaDB)
+├── src/
+│   ├── backend/             # Backend (FastAPI)
+│   │   ├── app/
+│   │   │   ├── api/         # API endpoints (repos, chunks, search, chat, settings)
+│   │   │   ├── services/    # Business logic (indexing, retrieval, chat, LLM client)
+│   │   │   ├── config/      # Configuration management
+│   │   │   └── main.py      # FastAPI entry point
+│   └── frontend/            # Frontend source (React + Vite)
+│       ├── pages/           # Pages (Chat, Repos, Chunks, Search, Settings)
+│       ├── components/      # Components (MarkdownMessage, RagPanel)
+│       ├── services/        # API client
+│       ├── types/           # TypeScript types
+│       ├── lib/             # Frontend utilities
+│       ├── App.tsx
+│       ├── index.css
+│       └── main.tsx
+├── tests/
+│   └── backend/             # Backend tests
+├── scripts/                 # Startup scripts
 │   └── start-macos.sh
 └── README.md
 ```
 
-## 快速开始
+## Quick Start
 
-### 环境要求
+### Requirements
 
-- uv（管理 Python 3.12+ 环境与依赖）
+- uv for Python 3.12+ environment and dependency management
 - Node.js 18+
 
-### 一键启动（推荐）
+### One-command Start
 
 #### macOS
 
 ```bash
-# 添加执行权限（首次运行）
+# Add execute permission on first run
 chmod +x scripts/start-macos.sh
 
-# 启动服务
+# Start services
 ./scripts/start-macos.sh
 ```
 
-启动后访问：
-- **前端界面**: http://localhost:5173
-- **后端 API**: http://localhost:8000
-- **API 文档**: http://localhost:8000/docs
+After startup, open:
 
-> 💡 **提示**: 首次启动后，请先在「设置」页面配置 LLM 和 Embedding 的 API Key。
+- **Frontend UI**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **API docs**: http://localhost:8000/docs
 
-### 手动分步启动
+On first startup, configure the LLM and embedding API keys on the Settings page.
 
-如需开发调试，可手动启动前后端：
+### Manual Startup
 
-#### 后端
+For development and debugging, you can start the backend and frontend separately.
+
+#### Backend
 
 ```bash
 uv sync --all-groups
-uv run --project . --directory backend python -m uvicorn app.main:app --reload --port 8000
+uv run --project . --directory src/backend python -m uvicorn app.main:app --reload --port 8000
 ```
 
-#### 前端
+#### Frontend
 
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
 
-## 使用流程
+## Workflow
 
-1. **配置模型** — 在「设置」页面填入 LLM 和 Embedding 的 API Key、Base URL、模型名
-2. **添加代码库** — 在「代码库管理」页面输入本地路径或上传 ZIP 文件
-3. **索引代码** — 点击「开始索引」，等待分块和向量化完成
-4. **开始对话** — 在「对话」页面新建会话，向代码库提问
-5. **查看检索过程** — 点击 assistant 消息下方的「检索过程」按钮，右侧面板展示 RAG 细节
+1. **Configure models** - Add API keys, base URLs, and model names on the Settings page.
+2. **Add a repository** - Enter a local path or upload a ZIP archive on the Repositories page.
+3. **Index code** - Start indexing and wait for chunking and embedding to finish.
+4. **Start chatting** - Create a chat session and ask questions about the repository.
+5. **Inspect retrieval** - Open the retrieval trace below an assistant message to review RAG details.
 
-## API 端点
+## API Endpoints
 
-| 方法 | 路径 | 描述 |
+| Method | Path | Description |
 |------|------|------|
-| POST | `/api/repos` | 添加本地代码库 |
-| POST | `/api/repos/upload` | 上传 ZIP 代码库 |
-| GET | `/api/repos` | 列出所有代码库 |
-| DELETE | `/api/repos/{repo_id}` | 删除代码库 |
-| POST | `/api/repos/{repo_id}/index` | 触发索引 |
-| GET | `/api/repos/{repo_id}/index/status` | 查询索引状态 |
-| POST | `/api/search` | 向量检索 |
-| POST | `/api/chat` | 流式对话 (SSE) |
-| GET | `/api/chat/sessions` | 列出会话 |
-| GET/PUT | `/api/settings` | 读取/更新配置 |
+| GET | `/api/health` | Health check |
+| POST | `/api/repos` | Add a local repository |
+| POST | `/api/repos/upload` | Upload a ZIP repository |
+| GET | `/api/repos` | List repositories |
+| DELETE | `/api/repos/{repo_id}` | Delete a repository |
+| POST | `/api/repos/{repo_id}/index` | Trigger indexing |
+| GET | `/api/repos/{repo_id}/index/status` | Get indexing status |
+| GET | `/api/repos/{repo_id}/chunks` | List indexed chunks |
+| GET | `/api/repos/{repo_id}/chunks/{chunk_id}/context` | Get source context for a chunk |
+| GET | `/api/repos/{repo_id}/stats` | Get repository index statistics |
+| POST | `/api/search` | Run vector search |
+| POST | `/api/chat/prompt-preview` | Preview assembled prompt parts |
+| POST | `/api/chat` | Stream chat responses (SSE) |
+| GET | `/api/chat/sessions` | List chat sessions |
+| POST | `/api/chat/sessions` | Create a chat session |
+| GET | `/api/chat/sessions/{session_id}` | Get a chat session |
+| DELETE | `/api/chat/sessions/{session_id}` | Delete a chat session |
+| GET/PUT | `/api/settings` | Read or update settings |
 
 ## License
 

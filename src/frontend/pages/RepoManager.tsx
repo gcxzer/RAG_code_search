@@ -83,7 +83,7 @@ export default function RepoManager() {
   }
 
   const handleDelete = async (repo_id: string) => {
-    if (!confirm('确认删除该代码库？')) return
+    if (!confirm('Delete this repository?')) return
     await deleteRepo(repo_id)
     setRepos(rs => rs.filter(r => r.repo_id !== repo_id))
   }
@@ -96,7 +96,7 @@ export default function RepoManager() {
       error:    'bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30',
     }
     const label: Record<string, string> = {
-      pending: '待索引', indexing: '索引中...', indexed: '已完成', error: '失败',
+      pending: 'Pending', indexing: 'Indexing...', indexed: 'Done', error: 'Failed',
     }
     return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls[s]}`}>{label[s]}</span>
   }
@@ -106,8 +106,8 @@ export default function RepoManager() {
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-semibold mb-2">知识库管理</h1>
-          <p className="text-muted-foreground text-sm">连接你的本地代码仓库或上传 ZIP 归档，系统将自动进行分块与向量化索引。</p>
+          <h1 className="text-2xl font-semibold mb-2">Repository Management</h1>
+          <p className="text-muted-foreground text-sm">Connect a local repository or upload a ZIP archive. The system will chunk and index it for semantic search.</p>
         </div>
 
         {/* Input card */}
@@ -123,7 +123,7 @@ export default function RepoManager() {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              本地路径直连
+              Local Path
             </button>
             <button
               onClick={() => { setMode('upload'); setError('') }}
@@ -134,14 +134,14 @@ export default function RepoManager() {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              ZIP 压缩包上传
+              Upload ZIP
             </button>
           </div>
 
           <div className="p-6">
             {mode === 'local' ? (
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-muted-foreground">本地仓库绝对路径</label>
+                <label className="block text-sm font-medium text-muted-foreground">Absolute local repository path</label>
                 <div className="flex gap-3">
                   <div className="flex-1 flex items-center bg-[hsl(var(--elevated))] border border-border rounded-lg px-3 input-pill">
                     <HardDrive size={16} className="text-muted-foreground mr-2 shrink-0" />
@@ -156,7 +156,7 @@ export default function RepoManager() {
                   </div>
                   <input
                     className="w-32 border border-border rounded-lg px-3 py-2 text-sm bg-[hsl(var(--elevated))] focus:outline-none focus:border-[#7c6af7] transition-colors"
-                    placeholder="名称（可选）"
+                    placeholder="Name (optional)"
                     value={name}
                     onChange={e => setName(e.target.value)}
                   />
@@ -165,7 +165,7 @@ export default function RepoManager() {
                     disabled={adding || !path.trim()}
                     className="px-5 py-2 bg-[#7c6af7] text-white rounded-lg text-sm font-medium hover:bg-[#6b5ce7] disabled:opacity-50 transition-colors active:scale-[0.97]"
                   >
-                    {adding ? <Loader2 size={16} className="animate-spin" /> : '添加并索引'}
+                    {adding ? <Loader2 size={16} className="animate-spin" /> : 'Add and index'}
                   </button>
                 </div>
               </div>
@@ -180,8 +180,8 @@ export default function RepoManager() {
                     <span className="text-sm font-medium text-foreground">{zipFile.name} ({(zipFile.size / 1024 / 1024).toFixed(1)} MB)</span>
                   ) : (
                     <>
-                      <p className="text-sm font-medium text-foreground">点击选择或拖拽 ZIP 文件到此处</p>
-                      <p className="text-xs text-muted-foreground">最大支持 500MB</p>
+                      <p className="text-sm font-medium text-foreground">Click to choose or drag a ZIP file here</p>
+                      <p className="text-xs text-muted-foreground">Up to 500 MB</p>
                     </>
                   )}
                 </label>
@@ -198,7 +198,7 @@ export default function RepoManager() {
                 <div className="flex gap-3">
                   <input
                     className="w-48 border border-border rounded-lg px-3 py-2 text-sm bg-[hsl(var(--elevated))] focus:outline-none focus:border-[#7c6af7] transition-colors"
-                    placeholder="名称（可选）"
+                    placeholder="Name (optional)"
                     value={name}
                     onChange={e => setName(e.target.value)}
                   />
@@ -207,7 +207,7 @@ export default function RepoManager() {
                     disabled={adding || !zipFile}
                     className="px-5 py-2 bg-[#7c6af7] text-white rounded-lg text-sm font-medium hover:bg-[#6b5ce7] disabled:opacity-50 transition-colors active:scale-[0.97]"
                   >
-                    {adding ? <Loader2 size={16} className="animate-spin" /> : '上传并添加'}
+                    {adding ? <Loader2 size={16} className="animate-spin" /> : 'Upload and add'}
                   </button>
                 </div>
               </div>
@@ -219,9 +219,9 @@ export default function RepoManager() {
 
         {/* Repo list */}
         <div className="space-y-4">
-          <h2 className="text-lg font-medium">已连接的仓库 ({repos.length})</h2>
+          <h2 className="text-lg font-medium">Connected repositories ({repos.length})</h2>
           {repos.length === 0 && (
-            <p className="text-sm text-muted-foreground">暂无代码库，请添加本地路径或上传 ZIP 文件。</p>
+            <p className="text-sm text-muted-foreground">No repositories yet. Add a local path or upload a ZIP file.</p>
           )}
           <div className="grid gap-3">
             {repos.map(repo => (
@@ -237,14 +237,14 @@ export default function RepoManager() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-sm">{repo.name}</span>
                       {repo.source === 'upload' && (
-                        <span className="px-1.5 py-0.5 rounded text-xs bg-[#7c6af7]/10 text-[#7c6af7] border border-[#7c6af7]/30">上传</span>
+                        <span className="px-1.5 py-0.5 rounded text-xs bg-[#7c6af7]/10 text-[#7c6af7] border border-[#7c6af7]/30">Upload</span>
                       )}
                       {statusBadge(repo.status)}
                     </div>
                     <div className="text-xs text-muted-foreground font-mono flex items-center gap-3">
                       <span>{repo.path}</span>
                       {repo.status === 'indexed' && (
-                        <><span>·</span><span>{repo.file_count} 个文件</span><span>·</span><span>{repo.chunk_count} 个分块</span></>
+                        <><span>·</span><span>{repo.file_count} files</span><span>·</span><span>{repo.chunk_count} chunks</span></>
                       )}
                     </div>
                     {repo.error_msg && <p className="text-xs text-destructive mt-1">{repo.error_msg}</p>}
@@ -257,7 +257,7 @@ export default function RepoManager() {
                       onClick={() => navigate(`/chunks?repo=${repo.repo_id}`)}
                       className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-border rounded-lg hover:bg-accent transition-colors"
                     >
-                      <Layers size={13} /> 查看分块
+                      <Layers size={13} /> View chunks
                     </button>
                   )}
                   <button
@@ -266,8 +266,8 @@ export default function RepoManager() {
                     className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-border rounded-lg hover:bg-accent disabled:opacity-50 transition-colors"
                   >
                     {repo.status === 'indexing'
-                      ? <><Loader2 size={13} className="animate-spin" /> 索引中</>
-                      : <><RefreshCw size={13} /> {repo.status === 'indexed' ? '重新索引' : '开始索引'}</>}
+                      ? <><Loader2 size={13} className="animate-spin" /> Indexing</>
+                      : <><RefreshCw size={13} /> {repo.status === 'indexed' ? 'Reindex' : 'Index'}</>}
                   </button>
                   <button
                     onClick={() => handleDelete(repo.repo_id)}
