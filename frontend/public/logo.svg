@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166 160" role="img" aria-labelledby="title desc">
+  <title id="title">Code Knowledge Assistant</title>
+  <desc id="desc">A neutral code assistant mark with brackets and a knowledge node.</desc>
+  <rect width="166" height="160" rx="32" fill="#f8fafc"/>
+  <rect x="14" y="14" width="138" height="132" rx="26" fill="#ffffff" stroke="#dbe4f0" stroke-width="2"/>
+  <path d="M58 54 36 80l22 26" fill="none" stroke="#2563eb" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M108 54 130 80l-22 26" fill="none" stroke="#2563eb" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M91 42 75 118" fill="none" stroke="#0f172a" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="83" cy="80" r="18" fill="#10b981" fill-opacity=".14"/>
+  <circle cx="83" cy="80" r="7" fill="#10b981"/>
+</svg>
