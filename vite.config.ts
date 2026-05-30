@@ -18,4 +18,26 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/.test(id)) {
+            return 'react'
+          }
+          if (/[\\/]node_modules[\\/](@radix-ui)[\\/]/.test(id)) {
+            return 'radix'
+          }
+          if (/[\\/]node_modules[\\/](react-markdown|remark-gfm|prism-react-renderer)[\\/]/.test(id)) {
+            return 'markdown'
+          }
+          if (/[\\/]node_modules[\\/](lucide-react)[\\/]/.test(id)) {
+            return 'icons'
+          }
+          return 'vendor'
+        },
+      },
+    },
+  },
 })

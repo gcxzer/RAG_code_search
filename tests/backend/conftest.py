@@ -1,6 +1,4 @@
 import pytest
-import os
-import tempfile
 from fastapi.testclient import TestClient
 
 
@@ -17,7 +15,9 @@ def tmp_data_dir(monkeypatch, tmp_path):
     monkeypatch.setattr(defaults, "SETTINGS_FILE", str(tmp_path / "settings.json"))
     monkeypatch.setattr(manager, "SETTINGS_FILE", str(tmp_path / "settings.json"))
     monkeypatch.setattr(manager, "DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(rs, "DATA_DIR", str(tmp_path))
     monkeypatch.setattr(rs, "REPOS_FILE", str(tmp_path / "repos.json"))
+    monkeypatch.setattr(rs, "UPLOADS_DIR", str(tmp_path / "uploads"))
     monkeypatch.setattr(cs, "SESSIONS_FILE", str(tmp_path / "sessions.json"))
     monkeypatch.setattr(idx, "DATA_DIR", str(tmp_path))
     return tmp_path

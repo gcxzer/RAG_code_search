@@ -4,12 +4,13 @@ A repository knowledge Q&A system. Add a local repository or upload a ZIP archiv
 
 ## Core Features
 
-- **Repository management** - Add a local path or upload a ZIP archive, then index Python files.
+- **Repository management** - Add a local path or upload a ZIP archive, then index configurable code and text file extensions.
 - **Code chunking** - Split files by character count with overlap and line-boundary alignment.
 - **Vector search** - Store embeddings in ChromaDB and search by cosine similarity.
 - **RAG chat** - Retrieve relevant code snippets before streaming LLM answers with file paths and line numbers.
 - **Chunk inspection** - View the exact source location for every indexed chunk.
 - **Retrieval trace** - Persist RAG retrieval data for each chat turn and inspect it later.
+- **Prompt controls** - Configure indexed extensions, retrieval depth, and prompt token budget from Settings.
 
 ## Tech Stack
 
@@ -67,7 +68,7 @@ code-knowledge-assistant/
 ### Requirements
 
 - uv for Python 3.12+ environment and dependency management
-- Node.js 18+
+- Node.js 20.19+ or 22.12+
 
 ### One-command Start
 
@@ -89,6 +90,8 @@ After startup, open:
 
 On first startup, configure the LLM and embedding API keys on the Settings page.
 
+For shared environments, set `LOCAL_REPO_ROOTS` to a comma- or path-separator-delimited allowlist before enabling local-path repository adds. Remote clients cannot add local server paths unless `ALLOW_REMOTE_LOCAL_REPOS=true` is set.
+
 ### Manual Startup
 
 For development and debugging, you can start the backend and frontend separately.
@@ -109,7 +112,7 @@ npm run dev
 
 ## Workflow
 
-1. **Configure models** - Add API keys, base URLs, and model names on the Settings page.
+1. **Configure models** - Add API keys, base URLs, model names, indexed extensions, and prompt budget on the Settings page.
 2. **Add a repository** - Enter a local path or upload a ZIP archive on the Repositories page.
 3. **Index code** - Start indexing and wait for chunking and embedding to finish.
 4. **Start chatting** - Create a chat session and ask questions about the repository.

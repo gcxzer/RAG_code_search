@@ -88,7 +88,7 @@ trap cleanup SIGINT SIGTERM
 
 # Start backend in the background
 echo -e "${BLUE}[Info] Starting backend service...${NC}"
-uv run --project . --directory src/backend python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+uv run --project . --directory src/backend python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload &
 BACKEND_PID=$!
 
 # Wait for backend startup

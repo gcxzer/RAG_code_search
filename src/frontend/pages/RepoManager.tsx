@@ -44,6 +44,19 @@ export default function RepoManager() {
       }
     }, 1500)
   }
+
+  const queueRepoForIndex = async (repo: Repo) => {
+    const queued: Repo = { ...repo, status: 'indexing', error_msg: null }
+    setRepos(rs => [...rs, queued])
+    try {
+      await triggerIndex(repo.repo_id)
+      startPolling(repo.repo_id)
+    } catch (e) {
+      setRepos(rs => rs.map(r => r.repo_id === repo.repo_id ? repo : r))
+      throw e
+    }
+  }
+
   const handleAdd = async () => {
     setError('')
     if (mode === 'local') {
@@ -51,7 +64,7 @@ export default function RepoManager() {
       setAdding(true)
       try {
         const repo = await addRepo(path.trim(), name.trim() || undefined)
-        setRepos(rs => [...rs, repo])
+        await queueRepoForIndex(repo)
         setPath('')
         setName('')
       } catch (e: any) {
@@ -64,7 +77,7 @@ export default function RepoManager() {
       setAdding(true)
       try {
         const repo = await uploadRepo(zipFile, name.trim() || undefined)
-        setRepos(rs => [...rs, repo])
+        await queueRepoForIndex(repo)
         setZipFile(null)
         setName('')
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -77,9 +90,14 @@ export default function RepoManager() {
   }
 
   const handleIndex = async (repo_id: string) => {
-    await triggerIndex(repo_id)
-    setRepos(rs => rs.map(r => r.repo_id === repo_id ? { ...r, status: 'indexing' } : r))
-    startPolling(repo_id)
+    setError('')
+    try {
+      await triggerIndex(repo_id)
+      setRepos(rs => rs.map(r => r.repo_id === repo_id ? { ...r, status: 'indexing', error_msg: null } : r))
+      startPolling(repo_id)
+    } catch (e: any) {
+      setError(e.message)
+    }
   }
 
   const handleDelete = async (repo_id: string) => {

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.services import search_service
 
 router = APIRouter()
 
 
 class SearchRequest(BaseModel):
-    query: str
-    repo_id: str
-    top_k: int | None = None
+    query: str = Field(min_length=1, max_length=20_000)
+    repo_id: str = Field(min_length=1, max_length=128)
+    top_k: int | None = Field(default=None, ge=1, le=50)
 
 
 @router.post("/search")

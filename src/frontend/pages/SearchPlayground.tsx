@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listRepos, search, promptPreview, getChunkContext } from '@/services/api'
+import { listRepos, promptPreview, getChunkContext } from '@/services/api'
 import type { Repo, SearchResponse, PromptPreviewResponse, ChunkContext } from '@/types'
 import { cn } from '@/lib/utils'
 import {
@@ -35,11 +35,12 @@ export default function SearchPlayground() {
     setPreview(null)
     setLocatorCtx(null)
     try {
-      const [sr, pp] = await Promise.all([
-        search(query, repoId, topK),
-        promptPreview(query, repoId, undefined, topK),
-      ])
-      setResult(sr)
+      const pp = await promptPreview(query, repoId, undefined, topK)
+      setResult({
+        query_embedding_preview: pp.query_embedding_preview,
+        results: pp.retrieval_results,
+        total_searched: pp.total_searched,
+      })
       setPreview(pp)
     } catch (e: any) {
       setError(e.message)
@@ -113,10 +114,10 @@ export default function SearchPlayground() {
                     <input
                       type="number"
                       value={topK}
-                      onChange={e => setTopK(Number(e.target.value))}
+                      onChange={e => setTopK(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
                       className="w-full bg-transparent text-right font-mono text-sm text-foreground outline-none"
                       min={1}
-                      max={20}
+                      max={50}
                     />
                   </label>
                   <button

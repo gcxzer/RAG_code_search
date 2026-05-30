@@ -1,8 +1,9 @@
-import json
 import os
+import uuid
 from app.config.defaults import DATA_DIR
 from app.config.manager import get_settings
 from app.services import repo_service, llm_client
+from app.services.json_store import load_json, save_json
 
 
 def _chunks_file(repo_id: str) -> str:
@@ -11,23 +12,39 @@ def _chunks_file(repo_id: str) -> str:
 
 def _load_chunks(repo_id: str) -> list[dict]:
     f = _chunks_file(repo_id)
-    if not os.path.exists(f):
-        return []
-    with open(f) as fh:
-        return json.load(fh)
+    return load_json(f, [])
 
 
 def _save_chunks(repo_id: str, chunks: list[dict]) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
-    with open(_chunks_file(repo_id), "w") as fh:
-        json.dump(chunks, fh, indent=2)
+    save_json(_chunks_file(repo_id), chunks)
+
+
+def _require_repo(repo_id: str) -> dict:
+    repo = repo_service.get_repo(repo_id)
+    if not repo:
+        raise ValueError(f"Repo not found: {repo_id}")
+    return repo
+
+
+def _require_indexed_repo(repo_id: str) -> dict:
+    repo = _require_repo(repo_id)
+    if repo.get("status") != "indexed":
+        raise ValueError(f"Repo is not indexed yet: {repo_id}. Please index first.")
+    return repo
 
 
 def chunk_text(content: str, file_path: str, repo_id: str,
                chunk_size: int, overlap: int) -> list[dict]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than 0")
+    if overlap < 0:
+        raise ValueError("chunk_overlap must not be negative")
+    if overlap >= chunk_size:
+        raise ValueError("chunk_overlap must be smaller than chunk_size")
+
     lines = content.splitlines(keepends=True)
     chunks = []
-    char_pos = 0
     line_starts = []  # char offset of each line start
     pos = 0
     for line in lines:
@@ -94,7 +111,9 @@ def index_repo(repo_id: str) -> None:
         return
     try:
         settings = get_settings()
-        files = repo_service.scan_files(repo["path"])
+        if os.path.islink(repo["path"]):
+            raise ValueError("Repository path must not be a symbolic link")
+        files = repo_service.scan_files(repo["path"], settings.get("indexed_extensions"))
         all_chunks = []
         for abs_path in files:
             rel_path = os.path.relpath(abs_path, repo["path"])
@@ -109,47 +128,91 @@ def index_repo(repo_id: str) -> None:
             )
             all_chunks.extend(file_chunks)
 
-        _save_chunks(repo_id, all_chunks)
-
         # embed and store in ChromaDB
         import chromadb
         chroma_path = os.path.join(DATA_DIR, "chroma")
         client = chromadb.PersistentClient(path=chroma_path)
         collection_name = f"repo_{repo_id}"
-        try:
-            client.delete_collection(collection_name)
-        except Exception:
-            pass
+        suffix = uuid.uuid4().hex[:12]
+        temp_collection_name = f"{collection_name}_tmp_{suffix}"
+        backup_collection_name = f"{collection_name}_bak_{suffix}"
+        temp_chunks_file = f"{_chunks_file(repo_id)}.{suffix}.tmp"
+        temp_promoted = False
+        backup_created = False
+
         collection = client.create_collection(
-            collection_name,
+            temp_collection_name,
             metadata={"hnsw:space": "cosine"},
         )
 
-        batch_size = 6
-        for i in range(0, len(all_chunks), batch_size):
-            batch = all_chunks[i:i + batch_size]
-            texts = [c["content"] for c in batch]
-            ids = [c["chunk_id"] for c in batch]
-            metadatas = [{
-                "file_path": c["file_path"],
-                "line_start": c["line_start"],
-                "line_end": c["line_end"],
-                "chunk_index": c["chunk_index"],
-            } for c in batch]
-            embeddings = llm_client.embed_texts(texts)
-            collection.add(ids=ids, embeddings=embeddings,
-                           documents=texts, metadatas=metadatas)
+        try:
+            batch_size = 6
+            for i in range(0, len(all_chunks), batch_size):
+                batch = all_chunks[i:i + batch_size]
+                texts = [c["content"] for c in batch]
+                ids = [c["chunk_id"] for c in batch]
+                metadatas = [{
+                    "file_path": c["file_path"],
+                    "line_start": c["line_start"],
+                    "line_end": c["line_end"],
+                    "chunk_index": c["chunk_index"],
+                } for c in batch]
+                embeddings = llm_client.embed_texts(texts)
+                collection.add(ids=ids, embeddings=embeddings,
+                               documents=texts, metadatas=metadatas)
 
-        repo_service.update_repo(repo_id, {
-            "status": "indexed",
-            "file_count": len(files),
-            "chunk_count": len(all_chunks),
-        })
+            save_json(temp_chunks_file, all_chunks)
+
+            try:
+                old_collection = client.get_collection(collection_name)
+            except chromadb.errors.NotFoundError:
+                old_collection = None
+
+            if old_collection is not None:
+                old_collection.modify(name=backup_collection_name)
+                backup_created = True
+
+            collection.modify(name=collection_name)
+            temp_promoted = True
+            os.replace(temp_chunks_file, _chunks_file(repo_id))
+
+            if backup_created:
+                try:
+                    client.delete_collection(backup_collection_name)
+                except Exception:
+                    pass
+
+            repo_service.update_repo(repo_id, {
+                "status": "indexed",
+                "file_count": len(files),
+                "chunk_count": len(all_chunks),
+            })
+        except Exception:
+            if os.path.exists(temp_chunks_file):
+                os.remove(temp_chunks_file)
+            try:
+                if temp_promoted:
+                    client.delete_collection(collection_name)
+                else:
+                    client.delete_collection(temp_collection_name)
+            except chromadb.errors.NotFoundError:
+                pass
+            except Exception:
+                pass
+
+            if backup_created:
+                try:
+                    backup_collection = client.get_collection(backup_collection_name)
+                    backup_collection.modify(name=collection_name)
+                except Exception:
+                    pass
+            raise
     except Exception as e:
         repo_service.update_repo(repo_id, {"status": "error", "error_msg": str(e)})
 
 
 def get_chunks(repo_id: str) -> list[dict]:
+    _require_indexed_repo(repo_id)
     return _load_chunks(repo_id)
 
 
@@ -161,13 +224,19 @@ def get_chunk(repo_id: str, chunk_id: str) -> dict | None:
 
 
 def get_chunk_context(repo_id: str, chunk_id: str) -> dict:
+    repo = _require_indexed_repo(repo_id)
     chunk = get_chunk(repo_id, chunk_id)
     if not chunk:
         raise ValueError(f"Chunk not found: {chunk_id}")
-    repo = repo_service.get_repo(repo_id)
-    if not repo:
-        raise ValueError(f"Repo not found: {repo_id}")
-    abs_path = os.path.join(repo["path"], chunk["file_path"])
+    repo_root = os.path.realpath(repo["path"])
+    abs_path = os.path.realpath(os.path.join(repo["path"], chunk["file_path"]))
+    try:
+        if os.path.commonpath([repo_root, abs_path]) != repo_root:
+            raise ValueError("Chunk path escapes the repository root")
+    except ValueError:
+        raise ValueError("Chunk path escapes the repository root")
+    if os.path.islink(os.path.join(repo["path"], chunk["file_path"])):
+        raise ValueError("Chunk path points to a symbolic link")
     try:
         with open(abs_path, "r", encoding="utf-8", errors="ignore") as f:
             file_content = f.read()
@@ -185,6 +254,7 @@ def get_chunk_context(repo_id: str, chunk_id: str) -> dict:
 
 
 def get_stats(repo_id: str) -> dict:
+    _require_indexed_repo(repo_id)
     chunks = _load_chunks(repo_id)
     settings = get_settings()
     file_dist: dict[str, int] = {}

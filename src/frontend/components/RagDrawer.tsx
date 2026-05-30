@@ -11,23 +11,23 @@ interface Props {
 }
 
 export default function RagDrawer({ open, onClose, retrieval, prompt, tokens }: Props) {
+  if (!open) return null
+
   return (
     <>
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
-          onClick={onClose}
-        />
-      )}
+      <div
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
+        onClick={onClose}
+      />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-label="References"
-        className={`fixed top-0 right-0 h-full w-[340px] z-50 flex flex-col
+        className={`fixed top-0 right-0 h-full w-[min(340px,calc(100vw-1rem))] z-50 flex flex-col
           bg-[hsl(var(--sidebar-bg))] border-l border-border shadow-2xl
           transition-transform duration-300 ease-in-out
-          ${open ? 'translate-x-0' : 'translate-x-full'}`}
+          translate-x-0`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">

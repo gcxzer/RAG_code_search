@@ -59,15 +59,19 @@ export interface PromptPreviewResponse {
   prompt_parts: PromptParts
   total_tokens_estimate: number
   retrieval_results: SearchResult[]
+  query_embedding_preview: number[]
+  total_searched: number
 }
 
 export interface SessionMessage {
   role: string
   content: string
+  status?: 'complete' | 'interrupted' | 'error'
   rag_data?: {
     retrieval: SearchResult[]
     prompt_parts: PromptParts
     total_tokens_estimate: number
+    status?: 'complete' | 'interrupted' | 'error'
   }
 }
 
@@ -98,6 +102,8 @@ export interface Settings {
   chunk_size: number
   chunk_overlap: number
   top_k: number
+  max_prompt_tokens: number
+  indexed_extensions: string[]
   system_prompt: string
 }
 
@@ -105,4 +111,5 @@ export type SSEEvent =
   | { type: 'retrieval'; results: SearchResult[] }
   | { type: 'prompt'; prompt_parts: PromptParts; total_tokens_estimate: number }
   | { type: 'chunk'; content: string }
+  | { type: 'error'; message: string }
   | { type: 'done'; session_id: string }

@@ -12,7 +12,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail ?? res.statusText)
+    const detail = Array.isArray(err.detail) ? err.detail.map((d: any) => d.msg).join('; ') : err.detail
+    throw new Error(detail ?? res.statusText)
   }
   if (res.status === 204) return undefined as T
   return res.json()
@@ -54,9 +55,7 @@ export const getIndexStatus = (repo_id: string) =>
 export const listChunks = (repo_id: string) =>
   request<{ total: number; chunks: Chunk[] }>(`/repos/${repo_id}/chunks`)
 export const getChunkContext = (repo_id: string, chunk_id: string) => {
-  // encode # as %23 to prevent browser URL fragment truncation
-  // keep / unencoded so FastAPI {chunk_id:path} can capture it
-  const safeId = chunk_id.replace(/#/g, '%23')
+  const safeId = chunk_id.split('/').map(encodeURIComponent).join('/')
   return request<ChunkContext>(`/repos/${repo_id}/chunks/${safeId}/context`)
 }
 export const getRepoStats = (repo_id: string) =>
@@ -95,14 +94,20 @@ export function chatStream(
   onError?: (err: Error) => void
 ): () => void {
   let cancelled = false
+  const controller = new AbortController()
 
   fetch(`${BASE}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, session_id, repo_id }),
+    signal: controller.signal,
   })
     .then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+        const detail = Array.isArray(err.detail) ? err.detail.map((d: any) => d.msg).join('; ') : err.detail
+        throw new Error(detail ?? `HTTP ${res.status}`)
+      }
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -126,5 +131,8 @@ export function chatStream(
       if (!cancelled) onError?.(err)
     })
 
-  return () => { cancelled = true }
+  return () => {
+    cancelled = true
+    controller.abort()
+  }
 }

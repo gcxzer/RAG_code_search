@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Bot, Braces } from 'lucide-react'
+import { Plus, SendHorizonal, Square, MessageSquare, Trash2, Database, ChevronDown, FolderOpen, Search, Bot, Braces, Menu, PanelRightOpen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { listRepos, listSessions, createSession, deleteSession, chatStream } from '@/services/api'
 import type { Repo, Session, SearchResult, PromptParts, SSEEvent } from '@/types'
 import MarkdownMessage from '@/components/MarkdownMessage'
 import RagPanel from '@/components/RagPanel'
+import RagDrawer from '@/components/RagDrawer'
 
 interface RagData {
   retrieval: SearchResult[]
@@ -40,6 +41,8 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [activeRagIndex, setActiveRagIndex] = useState<number | null>(null)
+  const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false)
+  const [ragDrawerOpen, setRagDrawerOpen] = useState(false)
   const streamingRagRef = useRef<RagData>({ retrieval: [], prompt: null, tokens: 0 })
   const cancelRef = useRef<(() => void) | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -59,14 +62,19 @@ export default function ChatPage() {
   }, [messages])
 
   const handleNewSession = async () => {
+    if (!repoId) return
     const s = await createSession(repoId || undefined)
     setSessions(ss => [s, ...ss])
     setActiveSession(s)
     setMessages([])
     setActiveRagIndex(null)
+    setMobileSessionsOpen(false)
   }
 
   const handleSelectSession = (s: Session) => {
+    if (s.repo_id && repos.some(r => r.repo_id === s.repo_id)) {
+      setRepoId(s.repo_id)
+    }
     setActiveSession(s)
     const msgs: Message[] = s.messages.map(m => {
       const msg: Message = { role: m.role as 'user' | 'assistant', content: m.content }
@@ -82,6 +90,16 @@ export default function ChatPage() {
     setMessages(msgs)
     const lastRagIdx = msgs.reduce<number | null>((acc, m, i) => m.ragData ? i : acc, null)
     setActiveRagIndex(lastRagIdx)
+    setMobileSessionsOpen(false)
+  }
+
+  const handleRepoChange = (nextRepoId: string) => {
+    setRepoId(nextRepoId)
+    if (activeSession?.repo_id && activeSession.repo_id !== nextRepoId) {
+      setActiveSession(null)
+      setMessages([])
+      setActiveRagIndex(null)
+    }
   }
 
   const handleDeleteSession = async (sid: string, e: React.MouseEvent) => {
@@ -97,7 +115,11 @@ export default function ChatPage() {
 
   const handleStop = () => {
     cancelRef.current?.()
+    cancelRef.current = null
     setSending(false)
+    window.setTimeout(() => {
+      listSessions().then(setSessions).catch(() => {})
+    }, 300)
     setMessages(ms => {
       const copy = [...ms]
       const last = copy[copy.length - 1]
@@ -107,7 +129,7 @@ export default function ChatPage() {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !activeSession || sending) return
+    if (!input.trim() || !activeSession || !repoId || sending) return
     const msg = input.trim()
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -153,6 +175,22 @@ export default function ChatPage() {
             if (last?.role === 'assistant') copy[copy.length - 1] = { ...last, content: last.content + event.content }
             return copy
           })
+        } else if (event.type === 'error') {
+          setMessages(ms => {
+            const copy = [...ms]
+            const last = copy[copy.length - 1]
+            if (last?.role === 'assistant') {
+              copy[copy.length - 1] = {
+                ...last,
+                content: last.content ? `${last.content}\n\nError: ${event.message}` : `Error: ${event.message}`,
+                streaming: false,
+                ragData: { ...newRag },
+              }
+            }
+            return copy
+          })
+          cancelRef.current = null
+          setSending(false)
         } else if (event.type === 'done') {
           setMessages(ms => {
             const copy = [...ms]
@@ -160,11 +198,28 @@ export default function ChatPage() {
             if (last?.role === 'assistant') copy[copy.length - 1] = { ...last, streaming: false, ragData: { ...newRag } }
             return copy
           })
+          cancelRef.current = null
           setSending(false)
           listSessions().then(setSessions)
         }
       },
-      () => setSending(false)
+      (err) => {
+        setMessages(ms => {
+          const copy = [...ms]
+          const last = copy[copy.length - 1]
+          if (last?.role === 'assistant') {
+            copy[copy.length - 1] = {
+              ...last,
+              content: last.content ? `${last.content}\n\nError: ${err.message}` : `Error: ${err.message}`,
+              streaming: false,
+              ragData: { ...newRag },
+            }
+          }
+          return copy
+        })
+        cancelRef.current = null
+        setSending(false)
+      }
     )
   }
 
@@ -186,14 +241,39 @@ export default function ChatPage() {
   const activeReferenceCount = activeRagIndex !== null
     ? (messages[activeRagIndex]?.ragData?.retrieval.length ?? 0)
     : 0
+  const activePrompt = activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.prompt ?? null) : null
+  const activeRetrieval = activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.retrieval ?? []) : []
+  const activeTokens = activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.tokens ?? 0) : 0
 
   return (
     <div className="flex h-full gap-5 overflow-hidden bg-background p-5">
-      <aside className="panel hidden w-[300px] shrink-0 flex-col overflow-hidden md:flex">
-        <div className="border-b border-border p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Conversations</p>
-          <h2 className="mt-2 text-lg font-semibold tracking-tight">Chat</h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">Ask questions about one indexed repository.</p>
+      {mobileSessionsOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] md:hidden"
+          onClick={() => setMobileSessionsOpen(false)}
+        />
+      )}
+
+      <aside className={cn(
+        'panel w-[min(320px,calc(100vw-2rem))] shrink-0 flex-col overflow-hidden',
+        'fixed inset-y-4 left-4 z-50 md:static md:z-auto md:flex md:w-[300px]',
+        mobileSessionsOpen ? 'flex' : 'hidden'
+      )}>
+        <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Conversations</p>
+            <h2 className="mt-2 text-lg font-semibold tracking-tight">Chat</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Ask questions about one indexed repository.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileSessionsOpen(false)}
+            className="icon-button md:hidden"
+            aria-label="Close conversations"
+            title="Close conversations"
+          >
+            <X size={15} />
+          </button>
         </div>
 
         <div className="space-y-3 border-b border-border p-4">
@@ -212,7 +292,7 @@ export default function ChatPage() {
             <div className="relative">
               <select
                 value={repoId}
-                onChange={e => setRepoId(e.target.value)}
+                onChange={e => handleRepoChange(e.target.value)}
                 className="cursor-pointer w-full appearance-none border border-border rounded-lg
                            px-3 py-2 pr-8 text-xs bg-[hsl(var(--elevated))] text-foreground
                            focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary
@@ -226,6 +306,7 @@ export default function ChatPage() {
           <button
             type="button"
             onClick={handleNewSession}
+            disabled={!repoId}
             className="btn-primary h-9 w-full text-xs"
           >
             <Plus size={12} strokeWidth={2.5} />
@@ -294,18 +375,38 @@ export default function ChatPage() {
 
       <main className="panel flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex shrink-0 flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Chat</p>
-            <h1 className="mt-1 truncate text-lg font-semibold tracking-tight">
-              {activeSession ? 'Active conversation' : 'No conversation selected'}
-            </h1>
+          <div className="flex min-w-0 items-start gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileSessionsOpen(true)}
+              className="icon-button mt-0.5 md:hidden"
+              aria-label="Open conversations"
+              title="Open conversations"
+            >
+              <Menu size={16} />
+            </button>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Chat</p>
+              <h1 className="mt-1 truncate text-lg font-semibold tracking-tight">
+                {activeSession ? 'Active conversation' : 'No conversation selected'}
+              </h1>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5">
               <Database size={12} className="text-primary" />
               <span className="truncate font-medium text-foreground">{selectedRepo?.name ?? 'No repository'}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5">
+            <button
+              type="button"
+              onClick={() => setRagDrawerOpen(true)}
+              disabled={!activePrompt && activeRetrieval.length === 0}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5 transition-colors hover:border-[hsl(var(--border-hover))] disabled:pointer-events-none disabled:opacity-60 lg:hidden"
+            >
+              <PanelRightOpen size={12} className="text-primary" />
+              <span className="font-mono">{activeReferenceCount} references</span>
+            </button>
+            <div className="hidden items-center gap-1.5 rounded-lg border border-border bg-[hsl(var(--elevated))] px-3 py-1.5 lg:flex">
               <Search size={12} className="text-primary" />
               <span className="font-mono">{activeReferenceCount} references</span>
             </div>
@@ -325,9 +426,10 @@ export default function ChatPage() {
             </div>
             <button
               onClick={handleNewSession}
+              disabled={!repoId}
               className="cursor-pointer flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg
                          bg-primary text-primary-foreground hover:opacity-90 transition-all
-                         font-medium active:scale-[0.97]"
+                         font-medium active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
             >
               <Plus size={14} strokeWidth={2.5} /> New chat
             </button>
@@ -369,7 +471,12 @@ export default function ChatPage() {
                           )}
                           {m.ragData && !m.streaming && (
                             <button
-                              onClick={() => setActiveRagIndex(i)}
+                              onClick={() => {
+                                setActiveRagIndex(i)
+                                if (window.matchMedia('(max-width: 1023px)').matches) {
+                                  setRagDrawerOpen(true)
+                                }
+                              }}
                               className={cn(
                                 'cursor-pointer mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                                 activeRagIndex === i
@@ -422,10 +529,10 @@ export default function ChatPage() {
                         <button
                           onClick={handleSend}
                           aria-label="Send message"
-                          disabled={!input.trim()}
+                          disabled={!input.trim() || !repoId}
                           className={cn(
                             'w-9 h-9 flex items-center justify-center rounded-lg transition-all',
-                            input.trim()
+                            input.trim() && repoId
                               ? 'bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-hover))] active:scale-95 shadow-md shadow-primary/20'
                               : 'bg-[hsl(var(--hover))] text-muted-foreground cursor-not-allowed'
                           )}
@@ -444,10 +551,17 @@ export default function ChatPage() {
       </main>
 
       <RagPanel
-        retrieval={activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.retrieval ?? []) : []}
-        prompt={activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.prompt ?? null) : null}
-        tokens={activeRagIndex !== null ? (messages[activeRagIndex]?.ragData?.tokens ?? 0) : 0}
+        retrieval={activeRetrieval}
+        prompt={activePrompt}
+        tokens={activeTokens}
         streaming={sending && activeRagIndex !== null && activeRagIndex === messages.length - 1}
+      />
+      <RagDrawer
+        open={ragDrawerOpen}
+        onClose={() => setRagDrawerOpen(false)}
+        retrieval={activeRetrieval}
+        prompt={activePrompt}
+        tokens={activeTokens}
       />
     </div>
   )

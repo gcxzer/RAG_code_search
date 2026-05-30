@@ -1,12 +1,30 @@
 import os
 from app.config.defaults import DATA_DIR
 from app.config.manager import get_settings
-from app.services import llm_client, index_service
+from app.services import llm_client, repo_service
+
+
+def _normalize_top_k(top_k: int) -> int:
+    if top_k < 1 or top_k > 50:
+        raise ValueError("top_k must be between 1 and 50")
+    return top_k
+
+
+def _require_indexed_repo(repo_id: str) -> dict:
+    repo = repo_service.get_repo(repo_id)
+    if not repo:
+        raise ValueError(f"Repo not found: {repo_id}")
+    if repo.get("status") != "indexed":
+        raise ValueError(f"Repo is not indexed yet: {repo_id}. Please index first.")
+    return repo
 
 
 def search(query: str, repo_id: str, top_k: int | None = None) -> dict:
     settings = get_settings()
-    k = top_k if top_k is not None else settings["top_k"]
+    k = _normalize_top_k(top_k if top_k is not None else settings["top_k"])
+    if not query.strip():
+        raise ValueError("Query must not be empty")
+    _require_indexed_repo(repo_id)
 
     query_embedding = llm_client.embed_query(query)
     query_embedding_preview = query_embedding[:10]
@@ -28,6 +46,13 @@ def search(query: str, repo_id: str, top_k: int | None = None) -> dict:
         )
 
     total_searched = collection.count()
+    if total_searched == 0:
+        return {
+            "query_embedding_preview": [round(v, 6) for v in query_embedding_preview],
+            "results": [],
+            "total_searched": 0,
+        }
+
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=min(k, total_searched),
